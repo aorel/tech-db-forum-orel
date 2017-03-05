@@ -6,10 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.util.List;
 
 public class User {
+    @JsonIgnore
+    private int id;
     @JsonProperty
     private String nickname;
     @JsonProperty
@@ -26,6 +27,21 @@ public class User {
         this.fullname = fullname;
         this.about = about;
         this.email = email;
+    }
+    public User(int id, String nickname, String fullname, String about, String email){
+        this.id = id;
+        this.nickname = nickname;
+        this.fullname = fullname;
+        this.about = about;
+        this.email = email;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getNickname() {
@@ -66,6 +82,13 @@ public class User {
                 + " fullname:" + fullname
                 + " about:" + about
                 + " email:" + email);
+    }
+
+    public boolean isNull() {
+        return (nickname == null ||
+                fullname == null ||
+                about == null ||
+                email == null);
     }
 
     public static String toJSON(User user) {

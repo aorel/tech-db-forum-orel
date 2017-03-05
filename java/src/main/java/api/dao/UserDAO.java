@@ -11,5 +11,5 @@ public interface UserDAO {
 
     User getProfile(String nickname);
 
-    void setProfile(User updateUser);
+    void setProfile(User user);
 }

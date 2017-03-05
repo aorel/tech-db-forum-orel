@@ -1,9 +1,9 @@
 package api.controllers;
 
-import api.dao.ForumDAO;
 import api.dao.UserDAO;
 import api.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +31,9 @@ public class UserController {
         } catch (DataAccessException e) {
             System.out.println("DataAccessException");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(User.toJSON(newUser));
     }
@@ -41,6 +44,8 @@ public class UserController {
         User user;
         try {
             user = userDAO.getProfile(nickname);
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
@@ -56,12 +61,13 @@ public class UserController {
         try {
             userDAO.setProfile(updateUser);
         } catch (DuplicateKeyException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("{}");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(User.toJSON(updateUser));
+
+        // return ResponseEntity.status(HttpStatus.OK).body(User.toJSON(updateUser));
+        return getProfile(nickname);
     }
 }

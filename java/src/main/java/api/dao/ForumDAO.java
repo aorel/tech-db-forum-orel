@@ -9,4 +9,6 @@ public interface ForumDAO {
     void create(Forum forum);
 
     List<Forum> getDuplicates(Forum forum);
+
+    Forum getSlug(String slug);
 }
