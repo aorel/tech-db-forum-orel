@@ -84,31 +84,4 @@ public class User {
                 + " about:" + about
                 + " email:" + email);
     }
-
-    public boolean isNull() {
-        return (nickname == null ||
-                fullname == null ||
-                about == null ||
-                email == null);
-    }
-
-    public static String toJSON(User user) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(user);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
-
-    public static String toJSON(List<User> users) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(users);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
 }

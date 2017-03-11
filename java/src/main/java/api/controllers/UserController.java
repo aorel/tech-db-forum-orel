@@ -27,7 +27,7 @@ public class UserController {
             userDAO.create(newUser);
         } catch (DuplicateKeyException e) {
             List<User> duplicates = userDAO.getDuplicates(newUser);
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(User.toJSON(duplicates));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicates);
         } catch (DataAccessException e) {
             System.out.println("DataAccessException");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
@@ -35,7 +35,7 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(User.toJSON(newUser));
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @GetMapping(path = "/{nickname}/profile")
@@ -50,7 +50,7 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(User.toJSON(user));
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping(path = "/{nickname}/profile")
@@ -64,7 +64,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("{}");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         }
 
         // return ResponseEntity.status(HttpStatus.OK).body(User.toJSON(updateUser));

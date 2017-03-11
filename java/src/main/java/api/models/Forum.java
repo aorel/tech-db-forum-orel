@@ -100,24 +100,4 @@ public class Forum {
     public void setUserId(int userId) {
         this.userId = userId;
     }
-
-    public static String toJSON(Forum forum) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(forum);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
-
-    public static String toJSON(List<Forum> forums) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(forums);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
 }

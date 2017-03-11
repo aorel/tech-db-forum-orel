@@ -10,11 +10,11 @@ public class ServiceController {
 
     @PostMapping(path = "/clear")
     public ResponseEntity clear() {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 
     @GetMapping(path = "/status")
     public ResponseEntity status() {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 }

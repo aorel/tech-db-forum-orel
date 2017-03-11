@@ -58,7 +58,7 @@ public class ForumController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
             }
 
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Forum.toJSON(forum));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(forum);
         } catch (DataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         } catch (Exception e) {
@@ -66,7 +66,7 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(Forum.toJSON(newForum));
+        return ResponseEntity.status(HttpStatus.CREATED).body(newForum);
     }
 
     @GetMapping(path = "/{slug}/details")
@@ -80,7 +80,7 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(Forum.toJSON(forum));
+        return ResponseEntity.ok(forum);
     }
 
     @PostMapping(path = "/{slug}/create")
@@ -89,16 +89,6 @@ public class ForumController {
         System.out.println("/{slug}/create");
 
         thread.setSlug(slug);
-
-        /*User user;
-        try {
-            user = userDAO.getProfile(thread.getAuthor());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
-        }
-        thread.setUserId(user.getId());*/
-
 
         Forum forum;
         try {
@@ -113,22 +103,20 @@ public class ForumController {
 
         thread.setUserId(forum.getUserId());
         thread.setForumId(forum.getId());
-        System.out.println("Thread.toJSON(thread)" + Thread.toJSON(thread));
+        System.out.println("Thread:" + thread);
 
         try {
             int newId = threadDAO.create(thread);
             thread.setId(newId);
         } catch (DuplicateKeyException e) {
             List<Thread> duplicates = threadDAO.getDuplicates(thread);
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Thread.toJSON(duplicates));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicates);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
         }
 
-
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(Thread.toJSON(thread));
+        return ResponseEntity.status(HttpStatus.CREATED).body(thread);
     }
 
 
@@ -138,7 +126,7 @@ public class ForumController {
                                     @RequestParam(name = "since", required = false) String since,
                                     @RequestParam(name = "desc", required = false) boolean desc) {
 
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 
     @GetMapping(path = "/{slug}/threads")
@@ -146,6 +134,6 @@ public class ForumController {
                                       @RequestParam(name = "limit", required = false) int limit,
                                       @RequestParam(name = "since", required = false) String since,
                                       @RequestParam(name = "desc", required = false) boolean desc) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 }

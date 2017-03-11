@@ -129,24 +129,4 @@ public class Thread {
     public void setCreated(String created) {
         this.created = created;
     }
-
-    public static String toJSON(Thread thread) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(thread);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
-
-    public static String toJSON(List<Thread> thread) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writeValueAsString(thread);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
 }

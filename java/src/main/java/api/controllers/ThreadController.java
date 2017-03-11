@@ -33,13 +33,13 @@ public class ThreadController {
 
     @GetMapping(path = "/{slug_or_id}/details")
     public ResponseEntity getSlugDetails(@PathVariable(name = "slug") String slug) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 
     @PostMapping(path = "/{slug_or_id}/details")
     public ResponseEntity setSlugDetails(@PathVariable(name = "slug_or_id") String  slug_or_id,
                                        @RequestBody ThreadUpdate body){
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 
     @GetMapping(path = "/{slug_or_id}/posts")
@@ -48,12 +48,12 @@ public class ThreadController {
                               @RequestParam(name = "marker", required = false) String marker,
                               @RequestParam(name = "sort", required = false) String sort,
                               @RequestParam(name = "desc", required = false) boolean desc) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 
     @PostMapping(path = "/{slug_or_id}/vote")
     public ResponseEntity slugVote(@PathVariable(name = "slug_or_id") String slug_or_id,
                              @RequestBody ThreadVote body) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 }

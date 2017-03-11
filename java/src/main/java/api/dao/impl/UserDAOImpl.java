@@ -14,21 +14,20 @@ import java.util.List;
 
 @Repository
 public class UserDAOImpl implements UserDAO {
+    private static final UserMapper USER_MAPPER = new UserMapper();
     @Autowired
     private JdbcTemplate template;
 
     @Override
     public void create(User user) {
         final String SQL = "INSERT INTO users (nickname, fullname, email, about) VALUES(?, ?, ?, ?)";
-        template.update(SQL, new Object[]{user.getNickname(), user.getFullname(), user.getEmail(), user.getAbout()});
+        template.update(SQL, user.getNickname(), user.getFullname(), user.getEmail(), user.getAbout());
     }
 
     @Override
     public List<User> getDuplicates(User user) {
         final String SQL = "SELECT * FROM users WHERE LOWER(nickname) = LOWER(?) OR LOWER(email) = LOWER(?)";
-        return template.query(SQL,
-                new Object[]{user.getNickname(), user.getEmail()},
-                new UserMapper());
+        return template.query(SQL, USER_MAPPER, user.getNickname(), user.getEmail());
     }
 
     @Override

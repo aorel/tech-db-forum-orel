@@ -14,12 +14,12 @@ public class PostController {
     @GetMapping(path = "/{id}/details")
     public ResponseEntity getIdDetails(@PathVariable(name = "id") int id,
                                        @RequestParam(name = "related", required = false) List<String> related) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 
     @PostMapping(path = "/{id}/details")
     public ResponseEntity setIdDetails(@PathVariable(name = "id") int id,
                               @RequestBody PostUpdate post) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        return ResponseEntity.ok("{}");
     }
 }
