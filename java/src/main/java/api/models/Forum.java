@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 public class Forum {
-    @JsonIgnore
+    @JsonProperty
     private int id;
     @JsonProperty
     private String title;
@@ -33,6 +33,10 @@ public class Forum {
         this.slug = slug;
         this.posts = posts;
         this.threads = threads;
+    }
+
+    public Forum() {
+
     }
 
     public Forum(String title, String user, String slug) {

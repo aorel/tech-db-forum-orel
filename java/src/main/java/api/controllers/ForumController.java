@@ -1,8 +1,10 @@
 package api.controllers;
 
 import api.dao.ForumDAO;
+import api.dao.ThreadDAO;
 import api.dao.UserDAO;
 import api.models.Forum;
+import api.models.Thread;
 import api.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -11,11 +13,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(path = "/api/forum")
 public class ForumController {
     @Autowired
     private ForumDAO forumDAO;
+    @Autowired
+    private ThreadDAO threadDAO;
     @Autowired
     private UserDAO userDAO;
 
@@ -31,12 +37,27 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("");
         }
 
+        System.out.println("create getNickname: " + user.getNickname());
         newForum.setUserId(user.getId());
+        if (!newForum.getUser().equals(user.getNickname())) {
+            System.out.println(" | " + newForum.getUser());
+            newForum.setUser(user.getNickname());
+        }
 
         try {
             forumDAO.create(newForum);
         } catch (DuplicateKeyException e) {
-            Forum forum = forumDAO.getSlug(newForum.getSlug());
+            e.printStackTrace();
+
+            Forum forum;
+
+            try {
+                forum = forumDAO.getSlug(newForum.getSlug());
+            } catch (Exception ee) {
+                ee.printStackTrace();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            }
+
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Forum.toJSON(forum));
         } catch (DataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
@@ -63,8 +84,51 @@ public class ForumController {
     }
 
     @PostMapping(path = "/{slug}/create")
-    public ResponseEntity slugCreate(@RequestBody Thread body) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+    public ResponseEntity slugCreate(@PathVariable(name = "slug") String slug,
+                                     @RequestBody Thread thread) {
+        System.out.println("/{slug}/create");
+
+        thread.setSlug(slug);
+
+        /*User user;
+        try {
+            user = userDAO.getProfile(thread.getAuthor());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+        }
+        thread.setUserId(user.getId());*/
+
+
+        Forum forum;
+        try {
+            forum = forumDAO.getSlug(slug);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+        }
+        System.out.println("forum.getUserId()" + forum.getUserId());
+        System.out.println("    forum.getId()" + forum.getId());
+
+        thread.setUserId(forum.getUserId());
+        thread.setForumId(forum.getId());
+        System.out.println("Thread.toJSON(thread)" + Thread.toJSON(thread));
+
+        try {
+            int newId = threadDAO.create(thread);
+            thread.setId(newId);
+        } catch (DuplicateKeyException e) {
+            List<Thread> duplicates = threadDAO.getDuplicates(thread);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Thread.toJSON(duplicates));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+        }
+
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(Thread.toJSON(thread));
     }
 
 

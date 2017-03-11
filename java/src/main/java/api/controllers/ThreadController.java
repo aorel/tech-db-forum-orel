@@ -1,11 +1,14 @@
 package api.controllers;
 
+import api.dao.ThreadDAO;
 import api.models.Post;
 import api.models.ThreadUpdate;
 import api.models.ThreadVote;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +16,19 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/thread")
 public class ThreadController {
+    @Autowired
+    private ThreadDAO threadDAO;
 
     @PostMapping(path = "/{slug_or_id}/create")
     public ResponseEntity slugCreate(@PathVariable(name = "slug") String slug,
                               @RequestBody List<Post> body) {
-        return ResponseEntity.status(HttpStatus.OK).body("{}");
+        try {
+            // threadDAO.create(...);
+        } catch (DuplicateKeyException e) {
+
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body("{}");
     }
 
     @GetMapping(path = "/{slug_or_id}/details")

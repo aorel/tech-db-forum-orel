@@ -39,9 +39,17 @@ public class ForumDAOImpl implements ForumDAO {
 
     private static final class ForumMapper implements RowMapper<Forum> {
         public Forum mapRow(ResultSet rs, int rowNum) throws SQLException {
-            final Forum forum = new Forum(rs.getString("title"),
+            /*final Forum forum = new Forum(rs.getString("title"),
                     rs.getString("nickname"),
-                    rs.getString("slug"));
+                    rs.getString("slug"));*/
+
+            final Forum forum = new Forum();
+            forum.setId(rs.getInt("id"));
+            forum.setTitle(rs.getString("title"));
+            forum.setUser(rs.getString("nickname"));
+            forum.setSlug(rs.getString("slug"));
+            forum.setUserId(rs.getInt("user_id"));
+
             return forum;
         }
     }

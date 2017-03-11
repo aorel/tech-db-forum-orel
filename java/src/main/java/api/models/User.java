@@ -36,6 +36,7 @@ public class User {
         this.email = email;
     }
 
+    @JsonIgnore
     public int getId() {
         return id;
     }

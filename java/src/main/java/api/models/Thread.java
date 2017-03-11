@@ -1,7 +1,12 @@
 package api.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.List;
 
 public class Thread {
     @JsonProperty
@@ -10,13 +15,21 @@ public class Thread {
     private String title;
     @JsonProperty
     private String author;
+
+    @JsonIgnore
+    private int userId;
+
     @JsonProperty
     private String forum;
+
+    @JsonIgnore
+    private int forumId;
+
     @JsonProperty
     private String message;
     @JsonProperty
     private int votes;
-    @JsonProperty
+    @JsonIgnore
     private String slug;
     @JsonProperty
     private String created;
@@ -60,12 +73,28 @@ public class Thread {
         this.author = author;
     }
 
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
     public String getForum() {
         return forum;
     }
 
     public void setForum(String forum) {
         this.forum = forum;
+    }
+
+    public int getForumId() {
+        return forumId;
+    }
+
+    public void setForumId(int forumId) {
+        this.forumId = forumId;
     }
 
     public String getMessage() {
@@ -84,6 +113,7 @@ public class Thread {
         this.votes = votes;
     }
 
+    @JsonIgnore
     public String getSlug() {
         return slug;
     }
@@ -98,5 +128,25 @@ public class Thread {
 
     public void setCreated(String created) {
         this.created = created;
+    }
+
+    public static String toJSON(Thread thread) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(thread);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    public static String toJSON(List<Thread> thread) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(thread);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 }
