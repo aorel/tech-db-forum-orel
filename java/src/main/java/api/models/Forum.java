@@ -3,10 +3,6 @@ package api.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
 
 public class Forum {
     @JsonProperty
@@ -36,13 +32,6 @@ public class Forum {
     }
 
     public Forum() {
-
-    }
-
-    public Forum(String title, String user, String slug) {
-        this.title = title;
-        this.user = user;
-        this.slug = slug;
     }
 
     public int getId() {

@@ -19,7 +19,7 @@ public class UserController {
     private UserDAO userDAO;
 
     @PostMapping(path = "/{nickname}/create")
-    public ResponseEntity create(@PathVariable(name = "nickname") String nickname,
+    public ResponseEntity create(@PathVariable(name = "nickname") final String nickname,
                                  @RequestBody User newUser) {
         newUser.setNickname(nickname);
 
@@ -30,44 +30,43 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicates);
         } catch (DataAccessException e) {
             System.out.println("DataAccessException");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            return ResponseEntity.notFound().build();
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @GetMapping(path = "/{nickname}/profile")
-    public ResponseEntity getProfile(@PathVariable(name = "nickname") String nickname) {
+    public ResponseEntity getProfile(@PathVariable(name = "nickname") final String nickname) {
 
         User user;
         try {
             user = userDAO.getProfile(nickname);
         } catch (EmptyResultDataAccessException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(user);
     }
 
     @PostMapping(path = "/{nickname}/profile")
-    public ResponseEntity setProfile(@PathVariable(name = "nickname") String nickname,
+    public ResponseEntity setProfile(@PathVariable(name = "nickname") final String nickname,
                                      @RequestBody User updateUser) {
         updateUser.setNickname(nickname);
 
         try {
             userDAO.setProfile(updateUser);
         } catch (DuplicateKeyException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("{}");
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+            return ResponseEntity.notFound().build();
         }
 
-        // return ResponseEntity.status(HttpStatus.OK).body(User.toJSON(updateUser));
         return getProfile(nickname);
     }
 }

@@ -33,16 +33,11 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public User getProfile(String nickname) {
         final String SQL = "SELECT * FROM users WHERE LOWER(nickname) = LOWER(?)";
-        return template.queryForObject(SQL, new Object[]{nickname}, new UserMapper());
+        return template.queryForObject(SQL, USER_MAPPER, nickname);
     }
 
     @Override
     public void setProfile(User user) {
-        /*final String SQL = "UPDATE users SET fullname = ?, email = ?, about = ? WHERE nickname = ?";
-        int result = template.update(SQL,
-                new Object[]{user.getFullname(), user.getEmail(), user.getAbout(), user.getNickname()});
-        System.out.println("setProfile result:" + result);*/
-
         final StringBuilder sql = new StringBuilder("UPDATE users SET");
         final List<Object> args = new ArrayList<>();
 
@@ -73,11 +68,13 @@ public class UserDAOImpl implements UserDAO {
 
     private static final class UserMapper implements RowMapper<User> {
         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-            final User user = new User(rs.getInt("id"),
-                    rs.getString("nickname"),
-                    rs.getString("fullname"),
-                    rs.getString("about"),
-                    rs.getString("email"));
+            final User user = new User();
+            user.setId(rs.getInt("id"));
+            user.setNickname(rs.getString("nickname"));
+            user.setFullname(rs.getString("fullname"));
+            user.setEmail(rs.getString("email"));
+            user.setAbout(rs.getString("about"));
+
             return user;
         }
     }

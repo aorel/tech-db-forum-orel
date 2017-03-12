@@ -24,9 +24,9 @@ public class ForumDAOImpl implements ForumDAO {
     }
 
     @Override
-    public List<Forum> getDuplicates(Forum forum) {
+    public List<Forum> getDuplicates(String slug) {
         final String SQL = "SELECT * FROM forums WHERE LOWER(slug) = LOWER(?)";
-        return template.query(SQL, FORUM_MAPPER, forum.getSlug());
+        return template.query(SQL, FORUM_MAPPER, slug);
     }
 
     @Override
@@ -37,10 +37,6 @@ public class ForumDAOImpl implements ForumDAO {
 
     private static final class ForumMapper implements RowMapper<Forum> {
         public Forum mapRow(ResultSet rs, int rowNum) throws SQLException {
-            /*final Forum forum = new Forum(rs.getString("title"),
-                    rs.getString("nickname"),
-                    rs.getString("slug"));*/
-
             final Forum forum = new Forum();
             forum.setId(rs.getInt("id"));
             forum.setTitle(rs.getString("title"));

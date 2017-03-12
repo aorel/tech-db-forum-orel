@@ -3,10 +3,6 @@ package api.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
 
 public class User {
     @JsonIgnore
@@ -28,12 +24,8 @@ public class User {
         this.about = about;
         this.email = email;
     }
-    public User(int id, String nickname, String fullname, String about, String email){
-        this.id = id;
-        this.nickname = nickname;
-        this.fullname = fullname;
-        this.about = about;
-        this.email = email;
+
+    public User() {
     }
 
     @JsonIgnore
@@ -75,13 +67,5 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public void __print() {
-        System.out.println("[__print]"
-                + " nickname:" + nickname
-                + " fullname:" + fullname
-                + " about:" + about
-                + " email:" + email);
     }
 }
