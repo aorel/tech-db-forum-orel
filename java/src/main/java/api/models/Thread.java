@@ -1,9 +1,6 @@
 package api.models;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Thread {
@@ -28,7 +25,11 @@ public class Thread {
     @JsonProperty
     private int votes;
     private String slug;
+
     private String created;
+    //@JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
+    //private Timestamp created;
+
 
     @JsonCreator
     public Thread(@JsonProperty("id") int id, @JsonProperty("title") String title,
@@ -120,6 +121,7 @@ public class Thread {
         this.slug = slug;
     }
 
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSX")
     public String getCreated() {
         return created;
     }

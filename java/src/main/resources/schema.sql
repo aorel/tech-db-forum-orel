@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS threads (
   title CITEXT NOT NULL,
   user_id INT NOT NULL,
   forum_id INT NOT NULL,
-  messege CITEXT NOT NULL,
+  message CITEXT NOT NULL,
   slug CITEXT NOT NULL UNIQUE,
   created TIMESTAMP DEFAULT NOW(),
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,

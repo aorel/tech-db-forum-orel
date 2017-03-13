@@ -19,9 +19,10 @@ public class ThreadController {
     @Autowired
     private ThreadDAO threadDAO;
 
-    @PostMapping(path = "/{slug_or_id}/create")
+    @PostMapping(path = "/{slug}/create")
     public ResponseEntity slugCreate(@PathVariable(name = "slug") final String slug,
                               @RequestBody List<Post> body) {
+
         try {
             // threadDAO.create(...);
         } catch (DuplicateKeyException e) {
@@ -31,19 +32,19 @@ public class ThreadController {
         return ResponseEntity.status(HttpStatus.CREATED).body("{}");
     }
 
-    @GetMapping(path = "/{slug_or_id}/details")
+    @GetMapping(path = "/{slug}/details")
     public ResponseEntity getSlugDetails(@PathVariable(name = "slug") final String slug) {
         return ResponseEntity.ok("{}");
     }
 
-    @PostMapping(path = "/{slug_or_id}/details")
-    public ResponseEntity setSlugDetails(@PathVariable(name = "slug_or_id") final String  slug_or_id,
+    @PostMapping(path = "/{slug}/details")
+    public ResponseEntity setSlugDetails(@PathVariable(name = "slug") final String  slug_or_id,
                                        @RequestBody ThreadUpdate body){
         return ResponseEntity.ok("{}");
     }
 
-    @GetMapping(path = "/{slug_or_id}/posts")
-    public ResponseEntity slugPosts(@PathVariable(name = "slug_or_id)") final String slug_or_id,
+    @GetMapping(path = "/{slug}/posts")
+    public ResponseEntity slugPosts(@PathVariable(name = "slug)") final String slug_or_id,
                               @RequestParam(name = "limit", required = false) final Integer limit,
                               @RequestParam(name = "marker", required = false) final String marker,
                               @RequestParam(name = "sort", required = false) final String sort,
@@ -51,8 +52,8 @@ public class ThreadController {
         return ResponseEntity.ok("{}");
     }
 
-    @PostMapping(path = "/{slug_or_id}/vote")
-    public ResponseEntity slugVote(@PathVariable(name = "slug_or_id") final String slug_or_id,
+    @PostMapping(path = "/{slug}/vote")
+    public ResponseEntity slugVote(@PathVariable(name = "slug") final String slug_or_id,
                              @RequestBody ThreadVote body) {
         return ResponseEntity.ok("{}");
     }

@@ -29,7 +29,7 @@ public class UserController {
             List<User> duplicates = userDAO.getDuplicates(newUser);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicates);
         } catch (DataAccessException e) {
-            System.out.println("DataAccessException");
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             e.printStackTrace();

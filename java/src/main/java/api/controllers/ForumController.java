@@ -25,7 +25,6 @@ public class ForumController {
     @Autowired
     private UserDAO userDAO;
 
-
     @PostMapping(path = "/create")
     public ResponseEntity create(@RequestBody Forum newForum) {
 
@@ -33,14 +32,11 @@ public class ForumController {
         try {
             user = userDAO.getProfile(newForum.getUser());
         } catch (DataAccessException e) {
-            System.out.println("DataAccessException");
             return ResponseEntity.notFound().build();
         }
 
-        System.out.println("create getNickname: " + user.getNickname());
         newForum.setUserId(user.getId());
         if (!newForum.getUser().equals(user.getNickname())) {
-            System.out.println(" | " + newForum.getUser());
             newForum.setUser(user.getNickname());
         }
 
@@ -86,10 +82,16 @@ public class ForumController {
     @PostMapping(path = "/{slug}/create")
     public ResponseEntity slugCreate(@PathVariable(name = "slug") final String slug,
                                      @RequestBody Thread thread) {
-        System.out.println("/{slug}/create");
-
         if(thread.getSlug() == null){
             thread.setSlug(slug);
+        }
+
+        User user;
+        try {
+            user = userDAO.getProfile(thread.getAuthor());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
         }
 
         Forum forum;
@@ -97,17 +99,12 @@ public class ForumController {
             forum = forumDAO.getSlug(slug);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.getMessage());
+            System.out.println("|" + e.getMessage());
             return ResponseEntity.notFound().build();
         }
-        System.out.println("forum.getUserId()" + forum.getUserId());
-        System.out.println("    forum.getId()" + forum.getId());
 
-        System.out.println("  forum.getSlug()" + forum.getSlug());
-
-        thread.setUserId(forum.getUserId());
+        thread.setUserId(user.getId());
         thread.setForumId(forum.getId());
-        //System.out.println("Thread:" + thread.toString());
 
         try {
             int newId = threadDAO.create(thread);
@@ -121,10 +118,7 @@ public class ForumController {
             return ResponseEntity.notFound().build();
         }
 
-        System.out.println(" thread.getSlug()" + thread.getSlug());
-        System.out.println("thread.getForum()" + thread.getForum());
         if (thread.getForum().equals(thread.getSlug())) {
-            System.out.println("EQUAL!" + thread.getForum() + thread.getSlug());
             thread.setSlug(null);
         }
 
@@ -151,7 +145,6 @@ public class ForumController {
             forumDuplicates = forumDAO.getDuplicates(slug);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         if (forumDuplicates.isEmpty()){
@@ -163,13 +156,9 @@ public class ForumController {
             threadDuplicates = threadDAO.get(slug, limit, since, desc);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
-        if (threadDuplicates.isEmpty()){
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok("{}");
+        return ResponseEntity.ok(threadDuplicates);
     }
 }
