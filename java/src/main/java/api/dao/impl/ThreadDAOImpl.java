@@ -2,6 +2,7 @@ package api.dao.impl;
 
 import api.dao.ThreadDAO;
 import api.models.Forum;
+import api.models.Post;
 import api.models.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,7 +20,8 @@ import java.util.List;
 
 @Repository
 public class ThreadDAOImpl implements ThreadDAO {
-    //private static final ThreadMapper THREAD_MAPPER = new ThreadMapper();
+    private static final ThreadMapper THREAD_MAPPER = new ThreadMapper();
+    private static final ThreadForumMapper THREAD_FORUM_MAPPER = new ThreadForumMapper();
     private static final ThreadForumUserMapper THREAD_FORUM_USER_MAPPER = new ThreadForumUserMapper();
     @Autowired
     private JdbcTemplate template;
@@ -41,31 +43,43 @@ public class ThreadDAOImpl implements ThreadDAO {
         return template.queryForObject(SQL, object, Integer.class);
     }
 
-    /*@Override
-    public List<Thread> getDuplicates(Thread thread) {
-//        final String SQL = "SELECT * FROM users WHERE LOWER(nickname) = LOWER(?) OR LOWER(email) = LOWER(?)";
-//        return template.query(SQL,
-//                new Object[]{user.getNickname(), user.getEmail()},
-//                new UserDAOImpl.UserMapper());
-
-//        final String SQL = "SELECT * FROM users WHERE LOWER(nickname) = LOWER(?) OR LOWER(email) = LOWER(?)";
-//        return template.query(SQL,
-//                new Object[]{user.getNickname(), user.getEmail()},
-//                new UserDAOImpl.UserMapper());
-
-
-        return null;
-    }*/
+    @Override
+    public Thread getByIdJoinForum(Integer id) {
+        final String SQL = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
+                "FROM threads " +
+                "JOIN forums ON forums.id=threads.forum_id " +
+                "WHERE threads.id=?;";
+        return template.queryForObject(SQL, THREAD_FORUM_MAPPER, id);
+    }
 
     @Override
-    public List<Thread> get(final String slug, final Integer limit, final String since, final Boolean desc) {
-        final StringBuilder sql = new StringBuilder(
-                "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
+    public Thread getBySlug(String slug) {
+        //final String SQL = "SELECT * FROM threads WHERE LOWER(slug) = LOWER(?);";
+        final String SQL = "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
+                "threads.slug AS t_slug, forums.slug AS f_slug, created FROM threads " +
+                "JOIN forums ON forums.id=threads.forum_id " +
+                "JOIN users ON users.id=threads.user_id " +
+                "WHERE LOWER(threads.slug) = LOWER(?)";
+        return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, slug);
+    }
+
+    @Override
+    public Thread getBySlugJoinForum(String slug) {
+        final String SQL = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
+                " FROM threads " +
+                " JOIN forums ON forums.id=threads.forum_id " +
+                " WHERE LOWER(threads.slug) = LOWER(?);";
+        return template.queryForObject(SQL, THREAD_FORUM_MAPPER, slug);
+    }
+
+    @Override
+    public List<Thread> getByForumSlug(final String slug, final Integer limit, final String since, final Boolean desc) {
+        final StringBuilder sql =
+                new StringBuilder("SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
                         "threads.slug AS t_slug, forums.slug AS f_slug, created FROM threads " +
                         "JOIN forums ON forums.id=threads.forum_id " +
                         "JOIN users ON users.id=threads.user_id " +
-                        "WHERE LOWER(forums.slug) = LOWER(?)"
-        );
+                        "WHERE LOWER(forums.slug) = LOWER(?)");
         final List<Object> args = new ArrayList<>();
         args.add(slug);
 
@@ -92,8 +106,30 @@ public class ThreadDAOImpl implements ThreadDAO {
         return template.query(sql.toString(), THREAD_FORUM_USER_MAPPER, args.toArray());
     }
 
+//    public void create(String slug, List<Post> posts) {
+//        System.out.println("ThreadDAOImpl create " + slug);
+//        for (Post post : posts) {
+//
+//            System.out.println(post.getAuthor());
+//            if(post.getCreated() != null) {
+//                System.out.println(post.getCreated());
+////                 Timestamp timestamp = Timestamp.valueOf(LocalDateTime.parse(post.getCreated(), DateTimeFormatter.ISO_DATE_TIME));
+//            } else {
+//                System.out.println("TIME NULL");
+//            }
+//            System.out.println(post.getMessage());
+//            System.out.println(post.getParent());
+//
+//            post.setId(42);
+//            post.setForum("");
+//
+//            System.out.println();
+//        }
+//        System.out.println("---------------------------------------------------");
+//    }
 
-    /*private static final class ThreadMapper implements RowMapper<Thread> {
+
+    private static final class ThreadMapper implements RowMapper<Thread> {
         public Thread mapRow(ResultSet rs, int rowNum) throws SQLException {
             final Thread thread = new Thread();
             thread.setId(rs.getInt("id"));
@@ -106,7 +142,17 @@ public class ThreadDAOImpl implements ThreadDAO {
 
             return thread;
         }
-    }*/
+    }
+
+    private static final class ThreadForumMapper implements RowMapper<Thread> {
+        public Thread mapRow(ResultSet rs, int rowNum) throws SQLException {
+            final Thread thread = new Thread();
+            thread.setId(rs.getInt("t_id"));
+            thread.setForum(rs.getString("f_slug"));
+
+            return thread;
+        }
+    }
 
     private static final class ThreadForumUserMapper implements RowMapper<Thread> {
         private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+03:00'");

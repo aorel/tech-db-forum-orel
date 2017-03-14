@@ -105,14 +105,16 @@ public class ForumController {
 
         thread.setUserId(user.getId());
         thread.setForumId(forum.getId());
+        thread.setForum(forum.getSlug());
 
         try {
             int newId = threadDAO.create(thread);
             thread.setId(newId);
         } catch (DuplicateKeyException e) {
-            // List<Thread> duplicates = threadDAO.getDuplicates(thread);
-            // return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicates);
-            return ResponseEntity.notFound().build();
+            e.printStackTrace();
+
+            Thread duplicatedThread = threadDAO.getBySlug(thread.getSlug());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicatedThread);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
@@ -153,7 +155,7 @@ public class ForumController {
 
         final List<Thread> threadDuplicates;
         try {
-            threadDuplicates = threadDAO.get(slug, limit, since, desc);
+            threadDuplicates = threadDAO.getByForumSlug(slug, limit, since, desc);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();

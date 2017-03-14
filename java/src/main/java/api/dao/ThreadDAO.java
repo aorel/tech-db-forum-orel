@@ -1,5 +1,6 @@
 package api.dao;
 
+import api.models.Post;
 import api.models.Thread;
 
 import java.util.List;
@@ -7,7 +8,11 @@ import java.util.List;
 public interface ThreadDAO {
     int create(final Thread thread);
 
-    //List<Thread> getDuplicates(Thread thread);
+    Thread getByIdJoinForum(Integer id);
 
-    List<Thread> get(final String slug, final Integer limit, final String since, final Boolean desc);
+    Thread getBySlug(String slug);
+
+    Thread getBySlugJoinForum(String slug);
+
+    List<Thread> getByForumSlug(final String slug, final Integer limit, final String since, final Boolean desc);
 }
