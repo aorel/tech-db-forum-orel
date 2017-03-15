@@ -26,3 +26,13 @@ CREATE TABLE IF NOT EXISTS threads (
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
   FOREIGN KEY (forum_id) REFERENCES forums (id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS votes (
+  id SERIAL NOT NULL PRIMARY KEY,
+  user_id INT NOT NULL,
+  thread_id INT NOT NULL,
+  voice SMALLINT,
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+  FOREIGN KEY (thread_id) REFERENCES threads (id) ON DELETE SET NULL,
+  UNIQUE (user_id, thread_id)
+);

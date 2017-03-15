@@ -99,7 +99,6 @@ public class ForumController {
             forum = forumDAO.getSlug(slug);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("|" + e.getMessage());
             return ResponseEntity.notFound().build();
         }
 
@@ -113,7 +112,7 @@ public class ForumController {
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
 
-            Thread duplicatedThread = threadDAO.getBySlug(thread.getSlug());
+            Thread duplicatedThread = threadDAO.getBySlugJoinAll(thread.getSlug());
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicatedThread);
         } catch (Exception e) {
             e.printStackTrace();

@@ -20,6 +20,16 @@ import java.util.List;
 
 @Repository
 public class ThreadDAOImpl implements ThreadDAO {
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+03:00'");
+
+    private static final String SQL_JOIN_FORUM_BEGIN = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
+            "FROM threads " +
+            "JOIN forums ON forums.id=threads.forum_id ";
+    private static final String SQL_JOIN_ALL_BEGIN = "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
+            "threads.slug AS t_slug, forums.slug AS f_slug, created FROM threads " +
+            "JOIN forums ON forums.id=threads.forum_id " +
+            "JOIN users ON users.id=threads.user_id ";
+
     private static final ThreadMapper THREAD_MAPPER = new ThreadMapper();
     private static final ThreadForumMapper THREAD_FORUM_MAPPER = new ThreadForumMapper();
     private static final ThreadForumUserMapper THREAD_FORUM_USER_MAPPER = new ThreadForumUserMapper();
@@ -44,37 +54,49 @@ public class ThreadDAOImpl implements ThreadDAO {
     }
 
     @Override
-    public Thread getByIdJoinForum(Integer id) {
-        final String SQL = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
+    public Thread getByIdJoinForum(final Integer id) {
+        /*final String SQL = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
                 "FROM threads " +
                 "JOIN forums ON forums.id=threads.forum_id " +
+                "WHERE threads.id=?;";*/
+        final String SQL = SQL_JOIN_FORUM_BEGIN +
                 "WHERE threads.id=?;";
         return template.queryForObject(SQL, THREAD_FORUM_MAPPER, id);
     }
 
     @Override
-    public Thread getBySlug(String slug) {
-        //final String SQL = "SELECT * FROM threads WHERE LOWER(slug) = LOWER(?);";
-        final String SQL = "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
-                "threads.slug AS t_slug, forums.slug AS f_slug, created FROM threads " +
-                "JOIN forums ON forums.id=threads.forum_id " +
-                "JOIN users ON users.id=threads.user_id " +
-                "WHERE LOWER(threads.slug) = LOWER(?)";
-        return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, slug);
+    public Thread getByIdJoinAll(final Integer id) {
+        final String SQL = SQL_JOIN_ALL_BEGIN +
+                "WHERE threads.id=?;";
+        return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, id);
     }
 
     @Override
-    public Thread getBySlugJoinForum(String slug) {
-        final String SQL = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
-                " FROM threads " +
-                " JOIN forums ON forums.id=threads.forum_id " +
+    public Thread getBySlug(String slug) {
+        final String SQL = "SELECT * FROM threads " +
+                "WHERE LOWER(slug) = LOWER(?)";
+        return template.queryForObject(SQL, THREAD_MAPPER, slug);
+    }
+
+    @Override
+    public Thread getBySlugJoinForum(final String slug) {
+        final String SQL = SQL_JOIN_FORUM_BEGIN +
                 " WHERE LOWER(threads.slug) = LOWER(?);";
         return template.queryForObject(SQL, THREAD_FORUM_MAPPER, slug);
     }
 
     @Override
+    public Thread getBySlugJoinAll(final String slug) {
+        final String SQL = SQL_JOIN_ALL_BEGIN +
+                "WHERE LOWER(threads.slug) = LOWER(?)";
+        System.out.println(SQL);
+        System.out.println(slug);
+        return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, slug);
+    }
+
+    @Override
     public List<Thread> getByForumSlug(final String slug, final Integer limit, final String since, final Boolean desc) {
-        final StringBuilder sql =
+        final StringBuilder SQL =
                 new StringBuilder("SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
                         "threads.slug AS t_slug, forums.slug AS f_slug, created FROM threads " +
                         "JOIN forums ON forums.id=threads.forum_id " +
@@ -84,26 +106,26 @@ public class ThreadDAOImpl implements ThreadDAO {
         args.add(slug);
 
         if (since != null) {
-            sql.append(" AND created ");
+            SQL.append(" AND created ");
 
             if (desc != null && desc.equals(true)) {
-                sql.append("<= ?");
+                SQL.append("<= ?");
             } else {
-                sql.append(">= ?");
+                SQL.append(">= ?");
             }
             args.add(Timestamp.valueOf(LocalDateTime.parse(since, DateTimeFormatter.ISO_OFFSET_DATE_TIME)));
         }
 
-        sql.append(" ORDER BY created ");
+        SQL.append(" ORDER BY created ");
 
         if (desc != null && desc.equals(true)) {
-            sql.append(" DESC ");
+            SQL.append(" DESC ");
         }
 
-        sql.append(" LIMIT ? ");
+        SQL.append(" LIMIT ? ");
         args.add(limit);
 
-        return template.query(sql.toString(), THREAD_FORUM_USER_MAPPER, args.toArray());
+        return template.query(SQL.toString(), THREAD_FORUM_USER_MAPPER, args.toArray());
     }
 
 //    public void create(String slug, List<Post> posts) {
@@ -138,7 +160,10 @@ public class ThreadDAOImpl implements ThreadDAO {
             thread.setForumId(rs.getInt("forum_id"));
             thread.setMessage(rs.getString("message"));
             thread.setSlug(rs.getString("slug"));
-            thread.setCreated(rs.getString("created"));
+
+            Timestamp created = rs.getTimestamp("created");
+            thread.setCreated(DATE_FORMAT.format(created));
+
 
             return thread;
         }
@@ -155,8 +180,6 @@ public class ThreadDAOImpl implements ThreadDAO {
     }
 
     private static final class ThreadForumUserMapper implements RowMapper<Thread> {
-        private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+03:00'");
-
         public Thread mapRow(ResultSet rs, int rowNum) throws SQLException {
             final Thread thread = new Thread();
             thread.setId(rs.getInt("t_id"));
@@ -169,7 +192,7 @@ public class ThreadDAOImpl implements ThreadDAO {
             thread.setForum(rs.getString("f_slug"));
 
             Timestamp created = rs.getTimestamp("created");
-            thread.setCreated(dateFormat.format(created));
+            thread.setCreated(DATE_FORMAT.format(created));
 
             return thread;
         }

@@ -21,7 +21,7 @@ public class ForumDAOImpl implements ForumDAO {
     @Override
     public void create(Forum forum) {
         final String SQL = "INSERT INTO forums (title, user_id, slug) VALUES(?, ?, ?)";
-        template.update(SQL,forum.getTitle(), forum.getUserId(), forum.getSlug());
+        template.update(SQL, forum.getTitle(), forum.getUserId(), forum.getSlug());
     }
 
     @Override
