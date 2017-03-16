@@ -36,3 +36,19 @@ CREATE TABLE IF NOT EXISTS votes (
   FOREIGN KEY (thread_id) REFERENCES threads (id) ON DELETE SET NULL,
   UNIQUE (user_id, thread_id)
 );
+
+CREATE TABLE IF NOT EXISTS posts (
+  id SERIAL NOT NULL PRIMARY KEY,
+  parent_id INT DEFAULT 0,
+  user_id INT NOT NULL,
+  forum_id INT NOT NULL,
+  thread_id INT NOT NULL,
+
+  is_edited BOOLEAN DEFAULT FALSE,
+  message CITEXT NOT NULL,
+  created TIMESTAMP DEFAULT NOW(),
+
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+  FOREIGN KEY (forum_id) REFERENCES forums (id) ON DELETE SET NULL,
+  FOREIGN KEY (thread_id) REFERENCES threads (id) ON DELETE SET NULL
+);

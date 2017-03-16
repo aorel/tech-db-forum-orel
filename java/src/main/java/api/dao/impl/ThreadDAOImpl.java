@@ -22,7 +22,7 @@ import java.util.List;
 public class ThreadDAOImpl implements ThreadDAO {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+03:00'");
 
-    private static final String SQL_JOIN_FORUM_BEGIN = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
+    private static final String SQL_JOIN_FORUM_BEGIN = "SELECT threads.id AS t_id, forums.id AS f_id, forums.slug AS f_slug " +
             "FROM threads " +
             "JOIN forums ON forums.id=threads.forum_id ";
     private static final String SQL_JOIN_ALL_BEGIN = "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
@@ -55,10 +55,6 @@ public class ThreadDAOImpl implements ThreadDAO {
 
     @Override
     public Thread getByIdJoinForum(final Integer id) {
-        /*final String SQL = "SELECT threads.id AS t_id, forums.slug AS f_slug " +
-                "FROM threads " +
-                "JOIN forums ON forums.id=threads.forum_id " +
-                "WHERE threads.id=?;";*/
         final String SQL = SQL_JOIN_FORUM_BEGIN +
                 "WHERE threads.id=?;";
         return template.queryForObject(SQL, THREAD_FORUM_MAPPER, id);
@@ -173,6 +169,7 @@ public class ThreadDAOImpl implements ThreadDAO {
         public Thread mapRow(ResultSet rs, int rowNum) throws SQLException {
             final Thread thread = new Thread();
             thread.setId(rs.getInt("t_id"));
+            thread.setForumId(rs.getInt("f_id"));
             thread.setForum(rs.getString("f_slug"));
 
             return thread;

@@ -21,6 +21,9 @@ public class Post {
     @JsonProperty
     private String created;
 
+    private int forumId;
+    private int userId;
+
     @JsonCreator
     public Post(@JsonProperty("id") int id, @JsonProperty("parent") int parent,
                 @JsonProperty("author") String author, @JsonProperty("message") String message,
@@ -34,6 +37,9 @@ public class Post {
         this.thread = thread;
         this.isEdited = isEdited;
         this.created = created;
+    }
+
+    public Post(){
     }
 
     public int getId() {
@@ -52,11 +58,11 @@ public class Post {
         this.parent = parent;
     }
 
-    public boolean isEdited() {
+    public boolean getIsEdited() {
         return isEdited;
     }
 
-    public void setEdited(boolean edited) {
+    public void setIsEdited(boolean edited) {
         isEdited = edited;
     }
 
@@ -98,5 +104,21 @@ public class Post {
 
     public void setCreated(String created) {
         this.created = created;
+    }
+
+    public int getForumId() {
+        return forumId;
+    }
+
+    public void setForumId(int forumId) {
+        this.forumId = forumId;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 }
