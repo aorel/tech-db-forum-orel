@@ -1,6 +1,7 @@
 package api.dao;
 
 import api.models.Thread;
+import api.models.ThreadUpdate;
 
 import java.util.List;
 
@@ -18,4 +19,8 @@ public interface ThreadDAO {
     Thread getBySlugJoinAll(String slug);
 
     List<Thread> getByForumSlug(final String slug, final Integer limit, final String since, final Boolean desc);
+
+    void update(Thread thread, ThreadUpdate threadUpdate);
+
+    void getCountVotes(Thread thread);
 }

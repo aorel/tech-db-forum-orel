@@ -12,4 +12,6 @@ public interface UserDAO {
     User getProfile(String nickname);
 
     void setProfile(User user);
+
+    List<User> getForumUsers(String slug, Integer limit, String since, Boolean desc);
 }

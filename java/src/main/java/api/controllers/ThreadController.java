@@ -8,8 +8,9 @@ import api.models.*;
 import java.util.List;
 
 import api.models.Thread;
-import org.eclipse.jetty.http.MetaData;
+import com.sun.istack.internal.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ public class ThreadController {
     @Autowired
     private PostDAO postDAO;
 
+    @Nullable
     private Thread getThreadDetails(final String slugOrId) {
         Thread thread;
         try {
@@ -46,7 +48,7 @@ public class ThreadController {
 
     @PostMapping(path = "/{slugOrId}/create")
     public ResponseEntity slugCreate(@PathVariable(name = "slugOrId") final String slugOrId,
-                                      @RequestBody List<Post> posts) {
+                                     @RequestBody List<Post> posts) {
         if (posts.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -64,11 +66,25 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
+        List<Integer> children = postDAO.getChildren(thread.getId());
+        for (Post post : posts) {
+            if (post.getParent() != null &&
+                    post.getParent() != 0 &&
+                    !children.contains(post.getParent())) {
+                System.out.println("No post parent");
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
+        }
+
         try {
             postDAO.create(thread, posts);
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (DataIntegrityViolationException e){
+            //user not found
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
@@ -77,17 +93,36 @@ public class ThreadController {
     @GetMapping(path = "/{slugOrId}/details")
     public ResponseEntity getSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId) {
         Thread thread = getThreadDetails(slugOrId);
-        if(thread == null) {
+        if (thread == null) {
             return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(thread);
         }
+
+        threadDAO.getCountVotes(thread);
+
+        return ResponseEntity.ok(thread);
+
     }
 
-    @PostMapping(path = "/{slug}/details")
-    public ResponseEntity setSlugDetails(@PathVariable(name = "slug") final String slug_or_id,
-                                         @RequestBody ThreadUpdate body) {
-        return ResponseEntity.ok("{}");
+    @PostMapping(path = "/{slugOrId}/details")
+    public ResponseEntity setSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId,
+                                         @RequestBody ThreadUpdate threadUpdate) {
+        Thread thread = getThreadDetails(slugOrId);
+        if (thread == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (threadUpdate.getTitle() == null) {
+            System.out.println("ThreadUpdate empty title");
+            return ResponseEntity.notFound().build();
+        }
+        if (threadUpdate.getMessage() == null) {
+            System.out.println("ThreadUpdate empty message");
+            return ResponseEntity.notFound().build();
+        }
+
+        threadDAO.update(thread, threadUpdate);
+
+        return ResponseEntity.ok(thread);
     }
 
     @GetMapping(path = "/{slugOrId}/posts")
@@ -98,7 +133,7 @@ public class ThreadController {
                                     @RequestParam(name = "desc", required = false, defaultValue = "false") final Boolean desc) {
 
         Thread thread = getThreadDetails(slugOrId);
-        if(thread == null) {
+        if (thread == null) {
             return ResponseEntity.notFound().build();
         }
 
@@ -111,15 +146,32 @@ public class ThreadController {
         }
 
         Posts posts = new Posts();
-        posts.setMarker(marker);
+        Integer size;
         try {
-            posts.setPosts(postDAO.getPosts(thread, limit, offset, sort, desc));
+            switch (sort) {
+                case "flat":
+                    posts.setPosts(postDAO.getPostsFlat(thread, limit, offset, desc));
+                    size = posts.getPosts().size();
+                    break;
+                case "tree":
+                    posts.setPosts(postDAO.getPostsTree(thread, limit, offset, desc));
+                    size = posts.getPosts().size();
+                    break;
+                case "parent_tree":
+                    List<Integer> parents = postDAO.getParents(thread, limit, offset, desc);
+                    size = parents.size();
+                    posts.setPosts(postDAO.getPostsParentTree(thread, desc, parents));
+                    break;
+                default:
+                    System.out.println("SORT ERROR");
+                    return ResponseEntity.notFound().build();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
 
-        offset += posts.getPosts().size();
+        offset += size;
         posts.setMarker(offset.toString());
         return ResponseEntity.ok(posts);
     }
@@ -128,7 +180,7 @@ public class ThreadController {
     public ResponseEntity slugVote(@PathVariable(name = "slugOrId") final String slugOrId,
                                    @RequestBody ThreadVote vote) {
         Thread thread = getThreadDetails(slugOrId);
-        if(thread == null) {
+        if (thread == null) {
             return ResponseEntity.notFound().build();
         }
 

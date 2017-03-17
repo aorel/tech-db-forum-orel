@@ -29,20 +29,6 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
 
     @Override
     public void create(final Thread thread, final ThreadVote vote) {
-        System.out.println("ThreadVoteDAOImpl create");
-
-        System.out.println(thread.getId());
-        System.out.println(thread.getTitle());
-        System.out.println(thread.getSlug());
-        System.out.println(thread.getMessage());
-        System.out.println(thread.getForum());
-        System.out.println(thread.getAuthor());
-        System.out.println(thread.getCreated());
-
-        System.out.println(vote.getNickname());
-        System.out.println(vote.getVoice());
-
-
         final String SQL = "INSERT INTO votes (user_id, thread_id, voice) " +
                 "VALUES ((SELECT id FROM users WHERE LOWER(nickname) = LOWER(?)), ?, ?);";
         template.update(SQL, vote.getNickname(), thread.getId(), vote.getVoice());
@@ -50,8 +36,6 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
 
     @Override
     public void insert(final ThreadVote vote) {
-        System.out.println("ThreadVoteDAOImpl insert");
-
         final String SQL = "UPDATE votes SET voice=? WHERE id=?;";
         template.update(SQL, vote.getVoice(), vote.getId());
     }
@@ -68,10 +52,6 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
         public ThreadVote mapRow(ResultSet rs, int rowNum) throws SQLException {
             final ThreadVote threadVote = new ThreadVote();
             threadVote.setId(rs.getInt("v_id"));
-            /*threadVote.setUserId(rs.getInt("user_id"));
-            threadVote.setThreadId(rs.getInt("thread_id"));
-
-            threadVote.setUserId(rs.getInt("user_id"));*/
 
             return threadVote;
         }

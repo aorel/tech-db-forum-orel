@@ -15,11 +15,12 @@ import java.util.List;
 public class ForumDAOImpl implements ForumDAO {
     private static final ForumMapper FORUM_MAPPER = new ForumMapper();
     private static final ForumUserMapper FORUM_USER_MAPPER = new ForumUserMapper();
+
     @Autowired
     private JdbcTemplate template;
 
     @Override
-    public void create(Forum forum) {
+    public void create(final Forum forum) {
         final String SQL = "INSERT INTO forums (title, user_id, slug) VALUES(?, ?, ?)";
         template.update(SQL, forum.getTitle(), forum.getUserId(), forum.getSlug());
     }
@@ -31,9 +32,25 @@ public class ForumDAOImpl implements ForumDAO {
     }
 
     @Override
-    public Forum getSlug(String slug) {
+    public Forum getBySlug(final String slug) {
         final String SQL = "SELECT * FROM forums JOIN users ON users.id=forums.user_id WHERE LOWER(slug) = LOWER(?)";
         return template.queryForObject(SQL, FORUM_USER_MAPPER, slug);
+    }
+
+    @Override
+    public void getCountPosts(final Forum forum) {
+        final String SQL = "SELECT count(*) FROM posts " +
+                "WHERE forum_id = ?;";
+
+        forum.setPosts(template.queryForObject(SQL, Integer.class, forum.getId()));
+    }
+
+    @Override
+    public void getCountThreads(final Forum forum) {
+        final String SQL = "SELECT count(*) FROM threads " +
+                "WHERE forum_id = ?;";
+
+        forum.setThreads(template.queryForObject(SQL, Integer.class, forum.getId()));
     }
 
     private static final class ForumMapper implements RowMapper<Forum> {
@@ -41,7 +58,6 @@ public class ForumDAOImpl implements ForumDAO {
             final Forum forum = new Forum();
             forum.setId(rs.getInt("id"));
             forum.setTitle(rs.getString("title"));
-            //forum.setUser(rs.getString("nickname"));
             forum.setSlug(rs.getString("slug"));
             forum.setUserId(rs.getInt("user_id"));
 

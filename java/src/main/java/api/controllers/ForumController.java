@@ -6,6 +6,7 @@ import api.dao.UserDAO;
 import api.models.Forum;
 import api.models.Thread;
 import api.models.User;
+import com.sun.istack.internal.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -24,6 +25,35 @@ public class ForumController {
     private ThreadDAO threadDAO;
     @Autowired
     private UserDAO userDAO;
+
+
+    @Nullable
+    private Forum getBySlug(final String slug) {
+        /*Thread thread;
+        try {
+            if (slugOrId.matches("\\d+")) {
+                Integer id = Integer.parseInt(slugOrId);
+                thread = threadDAO.getByIdJoinAll(id);
+            } else {
+                thread = threadDAO.getBySlugJoinAll(slugOrId);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            //return ResponseEntity.notFound().build();
+            return null;
+        }
+        return thread;*/
+
+
+        Forum forum;
+        try {
+            forum = forumDAO.getBySlug(slug);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return forum;
+    }
 
     @PostMapping(path = "/create")
     public ResponseEntity create(@RequestBody Forum newForum) {
@@ -45,12 +75,15 @@ public class ForumController {
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
 
-            Forum forum;
-
+            /*Forum forum;
             try {
-                forum = forumDAO.getSlug(newForum.getSlug());
+                forum = forumDAO.getBySlug(newForum.getSlug());
             } catch (Exception ee) {
                 ee.printStackTrace();
+                return ResponseEntity.notFound().build();
+            }*/
+            Forum forum = getBySlug(newForum.getSlug());
+            if (forum == null) {
                 return ResponseEntity.notFound().build();
             }
 
@@ -68,13 +101,20 @@ public class ForumController {
     @GetMapping(path = "/{slug}/details")
     public ResponseEntity slugDetails(@PathVariable(name = "slug") final String slug) {
 
-        Forum forum;
+        /*Forum forum;
         try {
-            forum = forumDAO.getSlug(slug);
+            forum = forumDAO.getBySlug(slug);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
+        }*/
+        Forum forum = getBySlug(slug);
+        if (forum == null) {
+            return ResponseEntity.notFound().build();
         }
+
+        forumDAO.getCountPosts(forum);
+        forumDAO.getCountThreads(forum);
 
         return ResponseEntity.ok(forum);
     }
@@ -94,11 +134,15 @@ public class ForumController {
             return ResponseEntity.notFound().build();
         }
 
-        Forum forum;
+        /*Forum forum;
         try {
-            forum = forumDAO.getSlug(slug);
+            forum = forumDAO.getBySlug(slug);
         } catch (Exception e) {
             e.printStackTrace();
+            return ResponseEntity.notFound().build();
+        }*/
+        Forum forum = getBySlug(slug);
+        if (forum == null) {
             return ResponseEntity.notFound().build();
         }
 
@@ -133,7 +177,14 @@ public class ForumController {
                                     @RequestParam(name = "since", required = false) final String since,
                                     @RequestParam(name = "desc", required = false) final Boolean desc) {
 
-        return ResponseEntity.ok("{}");
+        Forum forum = getBySlug(slug);
+        if (forum == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<User> users = userDAO.getForumUsers(slug, limit, since, desc);
+
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping(path = "/{slug}/threads")

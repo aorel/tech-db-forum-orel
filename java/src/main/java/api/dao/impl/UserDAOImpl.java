@@ -15,6 +15,7 @@ import java.util.List;
 @Repository
 public class UserDAOImpl implements UserDAO {
     private static final UserMapper USER_MAPPER = new UserMapper();
+
     @Autowired
     private JdbcTemplate template;
 
@@ -64,6 +65,38 @@ public class UserDAOImpl implements UserDAO {
         sql.append(" WHERE LOWER(nickname) = LOWER(?)");
         args.add(user.getNickname());
         template.update(sql.toString(), args.toArray());
+    }
+
+    @Override
+    public List<User> getForumUsers(String slug, Integer limit, String since, Boolean desc) {
+        final StringBuilder SQL = new StringBuilder("SELECT DISTINCT u.id, nickname, fullname, email, about FROM users u " +
+                "LEFT JOIN threads t ON (u.id = t.user_id) " +
+                "LEFT JOIN posts p ON (u.id = p.user_id) " +
+                "JOIN forums f ON (LOWER(f.slug)=LOWER(?) AND (f.id = t.forum_id OR f.id = p.forum_id)) ");
+        final List<Object> args = new ArrayList<>();
+        args.add(slug);
+
+        if (since != null) {
+            if (desc != null && desc) {
+                SQL.append("WHERE LOWER(nickname) < LOWER(?) ");
+            } else {
+                SQL.append("WHERE LOWER(nickname) > LOWER(?) ");
+            }
+            args.add(since);
+        }
+
+        SQL.append("ORDER BY nickname ");
+        if (desc != null) {
+            SQL.append((desc ? "DESC" : "ASC"));
+        }
+        if (limit != null) {
+            SQL.append(" LIMIT ? ");
+            args.add(limit);
+        }
+
+        SQL.append(";");
+
+        return template.query(SQL.toString(), args.toArray(), USER_MAPPER);
     }
 
     private static final class UserMapper implements RowMapper<User> {

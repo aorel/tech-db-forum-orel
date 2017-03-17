@@ -7,7 +7,7 @@ public class Post {
     @JsonProperty
     private int id;
     @JsonProperty
-    private int parent;
+    private Integer parent;
     @JsonProperty
     private boolean isEdited;
     @JsonProperty
@@ -50,11 +50,11 @@ public class Post {
         this.id = id;
     }
 
-    public int getParent() {
+    public Integer getParent() {
         return parent;
     }
 
-    public void setParent(int parent) {
+    public void setParent(Integer parent) {
         this.parent = parent;
     }
 
