@@ -10,9 +10,8 @@ import api.models.Forum;
 import api.models.Post;
 import api.models.PostDetails;
 import api.models.PostUpdate;
-import com.sun.istack.internal.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

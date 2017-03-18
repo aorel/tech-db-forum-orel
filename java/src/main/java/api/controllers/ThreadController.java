@@ -8,7 +8,7 @@ import api.models.*;
 import java.util.List;
 
 import api.models.Thread;
-import com.sun.istack.internal.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;

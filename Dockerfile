@@ -35,27 +35,19 @@ VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 USER root
 
 #==============================================================================
-#|
-#| # Установка JDK
-#| RUN apt-get install -y openjdk-8-jdk-headless
-#|
-#| # Копируем исходный код в Docker-контейнер
-#| ENV WORK /opt/tech-db-hello
-#| ADD java-spring/ $WORK/java-spring/
-#| ADD common/ $WORK/common/
-#|
-#| # Собираем и устанавливаем пакет
-#| WORKDIR $WORK/java-spring
-#| RUN ./gradlew assemble
-#|
-#|
-#|
-#| # Объявлем порт сервера
-#| EXPOSE 5000
-#|
-#| # Запускаем PostgreSQL и сервер
-#| CMD service postgresql start && java -Xmx300M -Xmx300M -jar $WORK/java-spring/build/libs/java-spring.jar --database=jdbc:postgresql://localhost/docker --username=docker --password=docker
-#|
+
+RUN apt-get install -y openjdk-8-jdk-headless maven
+
+ENV WORK /opt/tech-db-hello-orel
+ADD java/ $WORK/
+WORKDIR $WORK
+
+RUN mvn package
+
+EXPOSE 5000
+
+CMD service postgresql start && java -jar target/tech-db-forum-orel-1.0-SNAPSHOT.jar api.Application --database=jdbc:postgresql://localhost/docker --username=docker --password=docker
+
 #==============================================================================
 
-CMD service postgresql start && top
+# CMD service postgresql start && top
