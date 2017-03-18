@@ -6,7 +6,7 @@ import api.dao.UserDAO;
 import api.models.Forum;
 import api.models.Thread;
 import api.models.User;
-import com.sun.istack.internal.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
