@@ -29,22 +29,6 @@ public class ForumController {
 
     @Nullable
     private Forum getBySlug(final String slug) {
-        /*Thread thread;
-        try {
-            if (slugOrId.matches("\\d+")) {
-                Integer id = Integer.parseInt(slugOrId);
-                thread = threadDAO.getByIdJoinAll(id);
-            } else {
-                thread = threadDAO.getBySlugJoinAll(slugOrId);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            //return ResponseEntity.notFound().build();
-            return null;
-        }
-        return thread;*/
-
-
         Forum forum;
         try {
             forum = forumDAO.getBySlug(slug);
@@ -75,13 +59,6 @@ public class ForumController {
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
 
-            /*Forum forum;
-            try {
-                forum = forumDAO.getBySlug(newForum.getSlug());
-            } catch (Exception ee) {
-                ee.printStackTrace();
-                return ResponseEntity.notFound().build();
-            }*/
             Forum forum = getBySlug(newForum.getSlug());
             if (forum == null) {
                 return ResponseEntity.notFound().build();
@@ -100,14 +77,6 @@ public class ForumController {
 
     @GetMapping(path = "/{slug}/details")
     public ResponseEntity slugDetails(@PathVariable(name = "slug") final String slug) {
-
-        /*Forum forum;
-        try {
-            forum = forumDAO.getBySlug(slug);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.notFound().build();
-        }*/
         Forum forum = getBySlug(slug);
         if (forum == null) {
             return ResponseEntity.notFound().build();
@@ -134,13 +103,6 @@ public class ForumController {
             return ResponseEntity.notFound().build();
         }
 
-        /*Forum forum;
-        try {
-            forum = forumDAO.getBySlug(slug);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.notFound().build();
-        }*/
         Forum forum = getBySlug(slug);
         if (forum == null) {
             return ResponseEntity.notFound().build();

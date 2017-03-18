@@ -39,7 +39,6 @@ public class ThreadController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            //return ResponseEntity.notFound().build();
             return null;
         }
         return thread;
@@ -81,7 +80,7 @@ public class ThreadController {
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (DataIntegrityViolationException e){
+        } catch (DataIntegrityViolationException e) {
             //user not found
             e.printStackTrace();
             return ResponseEntity.notFound().build();
@@ -108,15 +107,6 @@ public class ThreadController {
                                          @RequestBody ThreadUpdate threadUpdate) {
         Thread thread = getThreadDetails(slugOrId);
         if (thread == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        if (threadUpdate.getTitle() == null) {
-            System.out.println("ThreadUpdate empty title");
-            return ResponseEntity.notFound().build();
-        }
-        if (threadUpdate.getMessage() == null) {
-            System.out.println("ThreadUpdate empty message");
             return ResponseEntity.notFound().build();
         }
 

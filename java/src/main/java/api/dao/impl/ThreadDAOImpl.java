@@ -70,7 +70,14 @@ public class ThreadDAOImpl implements ThreadDAO {
     }
 
     @Override
-    public Thread getBySlug(String slug) {
+    public Thread getById(final Integer id) {
+        final String SQL = "SELECT * FROM threads " +
+                "WHERE id = ?";
+        return template.queryForObject(SQL, THREAD_MAPPER, id);
+    }
+
+    @Override
+    public Thread getBySlug(final String slug) {
         final String SQL = "SELECT * FROM threads " +
                 "WHERE LOWER(slug) = LOWER(?)";
         return template.queryForObject(SQL, THREAD_MAPPER, slug);
@@ -126,14 +133,30 @@ public class ThreadDAOImpl implements ThreadDAO {
 
     @Override
     public void update(Thread thread, ThreadUpdate threadUpdate) {
-        final String SQL = "UPDATE threads SET " +
-                "title = ?, " +
-                "message = ? " +
-                "WHERE id = ?;";
-        template.update(SQL, threadUpdate.getTitle(), threadUpdate.getMessage(), thread.getId());
+        final StringBuilder sql = new StringBuilder("UPDATE threads SET");
+        final List<Object> args = new ArrayList<>();
 
-        thread.setTitle(threadUpdate.getTitle());
-        thread.setMessage(threadUpdate.getMessage());
+        if (threadUpdate.getTitle() != null) {
+            sql.append(" title = ?,");
+            args.add(threadUpdate.getTitle());
+
+            thread.setTitle(threadUpdate.getTitle());
+        }
+        if (threadUpdate.getMessage() != null) {
+            sql.append(" message = ?,");
+            args.add(threadUpdate.getMessage());
+
+            thread.setMessage(threadUpdate.getMessage());
+        }
+        if (args.isEmpty()) {
+            return;
+        }
+
+        sql.deleteCharAt(sql.length() - 1);
+
+        sql.append(" WHERE id = ?;");
+        args.add(thread.getId());
+        template.update(sql.toString(), args.toArray());
     }
 
     @Override

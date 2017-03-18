@@ -129,6 +129,10 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public void update(Post post, PostUpdate postUpdate) {
+        if(post.getMessage().equals(postUpdate.getMessage())){
+            return;
+        }
+
         final String SQL = "UPDATE posts SET " +
                 "message = ?, " +
                 "is_edited = TRUE " +

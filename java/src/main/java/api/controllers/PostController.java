@@ -2,7 +2,11 @@ package api.controllers;
 
 import java.util.List;
 
+import api.dao.ForumDAO;
 import api.dao.PostDAO;
+import api.dao.ThreadDAO;
+import api.dao.UserDAO;
+import api.models.Forum;
 import api.models.Post;
 import api.models.PostDetails;
 import api.models.PostUpdate;
@@ -18,22 +22,17 @@ public class PostController {
     @Autowired
     private PostDAO postDAO;
 
+    @Autowired
+    private UserDAO userDAO;
+
+    @Autowired
+    private ThreadDAO threadDAO;
+
+    @Autowired
+    private ForumDAO forumDAO;
+
     @Nullable
     private Post getPostDetails(final Integer id) {
-        /*Thread thread;
-        try {
-            if (slugOrId.matches("\\d+")) {
-                Integer id = Integer.parseInt(slugOrId);
-                thread = threadDAO.getByIdJoinAll(id);
-            } else {
-                thread = threadDAO.getBySlugJoinAll(slugOrId);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            //return ResponseEntity.notFound().build();
-            return null;
-        }
-        return thread;*/
         Post post;
         try {
             post = postDAO.getById(id);
@@ -55,6 +54,30 @@ public class PostController {
         PostDetails postDetails = new PostDetails();
         postDetails.setPost(post);
 
+        if (related != null) {
+            for (String item : related) {
+
+                switch (item) {
+                    case "user":
+                        postDetails.setAuthor(userDAO.getProfile(post.getAuthor()));
+                        break;
+                    case "thread":
+                        postDetails.setThread(threadDAO.getByIdJoinAll(post.getThread()));
+                        break;
+                    case "forum":
+                        Forum forum = forumDAO.getBySlug(post.getForum());
+                        forumDAO.getCountPosts(forum);
+                        forumDAO.getCountThreads(forum);
+
+                        postDetails.setForum(forum);
+                        break;
+                    default:
+                        System.out.println("RELATED ITEM ERROR");
+                        return ResponseEntity.notFound().build();
+                }
+            }
+        }
+
         return ResponseEntity.ok(postDetails);
     }
 
@@ -66,12 +89,9 @@ public class PostController {
             return ResponseEntity.notFound().build();
         }
 
-        if (postUpdate.getMessage() == null) {
-            System.out.println("PostUpdate empty message");
-            return ResponseEntity.notFound().build();
+        if (postUpdate.getMessage() != null) {
+            postDAO.update(post, postUpdate);
         }
-
-        postDAO.update(post, postUpdate);
 
         return ResponseEntity.ok(post);
     }

@@ -13,15 +13,6 @@ public class Service {
     @JsonProperty
     private int post;
 
-    @JsonCreator
-    public Service(@JsonProperty("user") int user, @JsonProperty("forum") int forum,
-                   @JsonProperty("thread") int thread, @JsonProperty("post") int post) {
-        this.user = user;
-        this.forum = forum;
-        this.thread = thread;
-        this.post = post;
-    }
-
     public int getUser() {
         return user;
     }

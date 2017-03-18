@@ -12,6 +12,8 @@ public interface ThreadDAO {
 
     Thread getByIdJoinAll(Integer id);
 
+    Thread getById(Integer id);
+
     Thread getBySlug(String slug);
 
     Thread getBySlugJoinForum(String slug);

@@ -9,8 +9,6 @@ public class ThreadVote {
     private String nickname;
     @JsonProperty
     private int voice;
-    /*private int userId;
-    private int threadId;*/
 
     @JsonCreator
     public ThreadVote(@JsonProperty("nickname") String nickname,
