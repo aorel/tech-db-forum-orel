@@ -63,7 +63,7 @@ public class PostDAOImpl implements PostDAO {
                 "JOIN threads t ON (p.thread_id = t.id AND t.slug = ?) " +
                 "JOIN forums f ON (t.forum_id = f.id)" +
                 "JOIN users u ON (u.id = p.user_id) " +
-                "ORDER BY created " + (desc ? "DESC" : "ASC") + " LIMIT ? OFFSET ?;";
+                "ORDER BY created " + (desc ? "DESC" : "ASC") + ", id LIMIT ? OFFSET ?;";
 
         return template.query(SQL, POST_MAPPER, thread.getSlug(),
                 limit, offset);
@@ -80,7 +80,7 @@ public class PostDAOImpl implements PostDAO {
                 "JOIN threads t ON (tr.thread_id = t.id AND t.slug = ?) " +
                 "JOIN forums f ON (t.forum_id = f.id) " +
                 "JOIN users u ON (u.id = tr.user_id) " +
-                "ORDER BY z_posts " + (desc ? "DESC" : "ASC") + " LIMIT ? OFFSET ?;";
+                "ORDER BY z_posts " + (desc ? "DESC" : "ASC") + ", id LIMIT ? OFFSET ?;";
 
         return template.query(SQL, POST_MAPPER, thread.getSlug(),
                 limit, offset);
@@ -91,7 +91,7 @@ public class PostDAOImpl implements PostDAO {
         final String SQL = "SELECT p.id FROM posts p " +
                 "JOIN threads t ON (t.id = p.thread_id) " +
                 "WHERE parent_id = 0 AND t.slug = ? " +
-                "ORDER BY p.id " + (desc ? "DESC" : "ASC") + " LIMIT ? OFFSET ?;";
+                "ORDER BY p.id " + (desc ? "DESC" : "ASC") + ", id LIMIT ? OFFSET ?;";
 
         return template.query(SQL, PARENT_MAPPER, thread.getSlug(),
                 limit, offset);
