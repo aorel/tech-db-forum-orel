@@ -37,12 +37,14 @@ public class PostDAOImpl implements PostDAO {
                 "VALUES (?, (SELECT id FROM users WHERE nickname = ?), ?, ?, ?, ?, ?) " +
                 "RETURNING id;";
 
+
+        LocalDateTime now = LocalDateTime.now();
         for (Post post : posts) {
             Timestamp timestamp;
             if (post.getCreated() != null) {
                 timestamp = Timestamp.valueOf(LocalDateTime.parse(post.getCreated(), DateTimeFormatter.ISO_DATE_TIME));
             } else {
-                timestamp = Timestamp.valueOf(LocalDateTime.parse(LocalDateTime.now().toString(), DateTimeFormatter.ISO_DATE_TIME));
+                timestamp = Timestamp.valueOf(LocalDateTime.parse(now.toString(), DateTimeFormatter.ISO_DATE_TIME));
             }
 
             id = template.queryForObject(SQL, Integer.class,
@@ -63,7 +65,8 @@ public class PostDAOImpl implements PostDAO {
                 "JOIN threads t ON (p.thread_id = t.id AND t.slug = ?) " +
                 "JOIN forums f ON (t.forum_id = f.id)" +
                 "JOIN users u ON (u.id = p.user_id) " +
-                "ORDER BY created " + (desc ? "DESC" : "ASC") + ", id LIMIT ? OFFSET ?;";
+                "ORDER BY created " + (desc ? "DESC" : "ASC") + ", id " + (desc ? "DESC" : "ASC") + " " +
+                "LIMIT ? OFFSET ?;";
 
         return template.query(SQL, POST_MAPPER, thread.getSlug(),
                 limit, offset);
@@ -76,11 +79,12 @@ public class PostDAOImpl implements PostDAO {
                 "UNION ALL " +
                 "SELECT p.id, p.user_id, p.created, p.forum_id, p.is_edited, p.message, p.parent_id, p.thread_id, array_append(z_posts, p.id) FROM posts p " +
                 "JOIN tree ON tree.id = p.parent_id) " +
-                "SELECT tr.id, nickname, tr.created, f.slug, is_edited, tr.message, tr.parent_id, tr.thread_id, array_to_string(z_posts, ' ') AS z_posts FROM tree tr " +
+                "SELECT tr.id, nickname, tr.created, f.slug, is_edited, tr.message, tr.parent_id, tr.thread_id, z_posts AS z_posts FROM tree tr " +
                 "JOIN threads t ON (tr.thread_id = t.id AND t.slug = ?) " +
                 "JOIN forums f ON (t.forum_id = f.id) " +
                 "JOIN users u ON (u.id = tr.user_id) " +
-                "ORDER BY z_posts " + (desc ? "DESC" : "ASC") + ", id LIMIT ? OFFSET ?;";
+                "ORDER BY z_posts " + (desc ? "DESC" : "ASC") + ", id " + (desc ? "DESC" : "ASC") + " " +
+                "LIMIT ? OFFSET ?;";
 
         return template.query(SQL, POST_MAPPER, thread.getSlug(),
                 limit, offset);
@@ -106,11 +110,11 @@ public class PostDAOImpl implements PostDAO {
                 "UNION ALL " +
                 "SELECT p.id, p.user_id, p.created, p.forum_id, p.is_edited, p.message, p.parent_id, p.thread_id, array_append(z_posts, p.id) FROM posts p " +
                 "JOIN tree ON tree.id = p.parent_id) " +
-                "SELECT tr.id, nickname, tr.created, f.slug, is_edited, tr.message, tr.parent_id, tr.thread_id, array_to_string(z_posts, ' ') AS z_posts FROM tree tr " +
+                "SELECT tr.id, nickname, tr.created, f.slug, is_edited, tr.message, tr.parent_id, tr.thread_id, z_posts AS z_posts FROM tree tr " +
                 "JOIN threads t ON (tr.thread_id = t.id AND t.slug = ?) " +
                 "JOIN forums f ON (t.forum_id = f.id) " +
                 "JOIN users u ON (u.id = tr.user_id) " +
-                "ORDER BY z_posts " + (desc ? "DESC" : "ASC");
+                "ORDER BY z_posts " + (desc ? "DESC" : "ASC") + ", id " + (desc ? "DESC" : "ASC");
         for (Integer parent : parents) {
             result.addAll(template.query(SQL, POST_MAPPER, parent, thread.getSlug()));
         }
