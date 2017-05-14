@@ -24,6 +24,7 @@ public class Thread {
     private String message;
     @JsonProperty
     private int votes;
+    @JsonProperty
     private String slug;
     private String created;
 

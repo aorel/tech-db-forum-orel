@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +33,8 @@ public class ForumController {
         Forum forum;
         try {
             forum = forumDAO.getBySlug(slug);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -91,13 +94,12 @@ public class ForumController {
     @PostMapping(path = "/{slug}/create")
     public ResponseEntity slugCreate(@PathVariable(name = "slug") final String slug,
                                      @RequestBody Thread thread) {
-        if(thread.getSlug() == null){
-            thread.setSlug(slug);
-        }
 
         User user;
         try {
             user = userDAO.getProfile(thread.getAuthor());
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
@@ -123,10 +125,6 @@ public class ForumController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
-        }
-
-        if (thread.getForum().equals(thread.getSlug())) {
-            thread.setSlug(null);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(thread);

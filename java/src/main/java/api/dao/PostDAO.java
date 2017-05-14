@@ -4,10 +4,12 @@ import api.models.Post;
 import api.models.PostUpdate;
 import api.models.Thread;
 
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PostDAO {
-    void create(Thread thread, List<Post> posts);
+    void create(Thread thread, List<Post> posts) throws SQLException;
 
     List<Post> getPostsFlat(Thread thread, Integer limit, Integer offset, Boolean desc);
 

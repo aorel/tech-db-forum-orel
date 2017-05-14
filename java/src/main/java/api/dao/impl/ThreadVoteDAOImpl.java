@@ -23,8 +23,8 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
         final String SQL = "SELECT votes.id AS v_id " +
                 "FROM votes " +
                 "JOIN users on users.id=votes.user_id " +
-                "WHERE LOWER(nickname) = LOWER(?);";
-        return template.queryForObject(SQL, THREAD_VOTE_MAPPER, vote.getNickname());
+                "WHERE LOWER(nickname) = LOWER(?) AND votes.thread_id = ?;";
+        return template.queryForObject(SQL, THREAD_VOTE_MAPPER, vote.getNickname(), thread.getId());
     }
 
     @Override
@@ -43,7 +43,9 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
     @Override
     public void count(final Thread thread) {
         final String SQL = "SELECT sum(voice) FROM votes WHERE thread_id=?;";
+
         int votes = template.queryForObject(SQL, Integer.class, thread.getId());
+//        System.out.println("votes=" + votes);
         thread.setVotes(votes);
     }
 

@@ -12,12 +12,28 @@ public class ServiceDAOImpl implements ServiceDAO {
 
     @Override
     public void clear() {
-        final String SQL = "DELETE FROM users;" +
-                "DELETE FROM forums;" +
-                "DELETE FROM threads;" +
-                "DELETE FROM votes;" +
-                "DELETE FROM posts;";
-        template.update(SQL);
+//        System.out.println("DEL_USERS...");
+//        final String DEL_USERS = "DELETE FROM users;";
+//        template.update(DEL_USERS);
+//
+//        System.out.println("DEL_FORUMS...");
+//        final String DEL_FORUMS = "DELETE FROM forums;";
+//        template.update(DEL_FORUMS);
+//
+//        System.out.println("DEL_THREADS...");
+//        final String DEL_THREADS = "DELETE FROM threads;";
+//        template.update(DEL_THREADS);
+//
+//        System.out.println("DEL_VOTES...");
+//        final String DEL_VOTES = "DELETE FROM votes;";
+//        template.update(DEL_VOTES);
+//
+//        System.out.println("DEL_POSTS...");
+//        final String DEL_POSTS = "DELETE FROM posts;";
+//        template.update(DEL_POSTS);
+
+        final String DEL_ = "TRUNCATE TABLE users, forums, threads, votes, posts CASCADE;";
+        template.update(DEL_);
     }
 
     @Override

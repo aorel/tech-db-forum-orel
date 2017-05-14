@@ -10,9 +10,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,31 +28,48 @@ public class PostDAOImpl implements PostDAO {
     private JdbcTemplate template;
 
     @Override
-    public void create(Thread thread, List<Post> posts) {
+    public void create(Thread thread, List<Post> posts) throws SQLException {
         // TODO get user id?
-        int id;
-        final String SQL = "INSERT INTO posts (parent_id, user_id, forum_id, thread_id, is_edited, message, created) " +
-                "VALUES (?, (SELECT id FROM users WHERE nickname = ?), ?, ?, ?, ?, ?) " +
-                "RETURNING id;";
-
+        final String NEW_SQL = "INSERT INTO posts (id, parent_id, user_id, forum_id, thread_id, is_edited, message, created) " +
+                "VALUES (?, ?, (SELECT id FROM users WHERE nickname = ?), ?, ?, ?, ?, ?);";
 
         LocalDateTime now = LocalDateTime.now();
-        for (Post post : posts) {
+        System.out.println("thread posts: size=" + posts.size() + ", date=" + now);
+        try (Connection connection = template.getDataSource().getConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement(NEW_SQL, Statement.NO_GENERATED_KEYS);
+
             Timestamp timestamp;
-            if (post.getCreated() != null) {
-                timestamp = Timestamp.valueOf(LocalDateTime.parse(post.getCreated(), DateTimeFormatter.ISO_DATE_TIME));
-            } else {
-                timestamp = Timestamp.valueOf(LocalDateTime.parse(now.toString(), DateTimeFormatter.ISO_DATE_TIME));
+            for (Post post : posts) {
+                // TODO generate next post.size() id!!!
+                final Integer new_id = template.queryForObject("SELECT nextval('posts_id_seq')", Integer.class);
+
+                if (post.getCreated() != null) {
+                    timestamp = Timestamp.valueOf(LocalDateTime.parse(post.getCreated(), DateTimeFormatter.ISO_DATE_TIME));
+                } else {
+                    timestamp = Timestamp.valueOf(LocalDateTime.parse(now.toString(), DateTimeFormatter.ISO_DATE_TIME));
+                }
+
+                preparedStatement.setInt(1, new_id);
+                preparedStatement.setInt(2, post.getParent());
+                preparedStatement.setString(3, post.getAuthor());
+                preparedStatement.setInt(4, thread.getForumId());
+                preparedStatement.setInt(5, thread.getId());
+                preparedStatement.setBoolean(6, post.getIsEdited());
+                preparedStatement.setString(7, post.getMessage());
+                preparedStatement.setTimestamp(8, timestamp);
+                preparedStatement.addBatch();
+                post.setId(new_id);
+                post.setThread(thread.getId());
+                post.setForum(thread.getForum());
+                post.setCreated(DATE_FORMAT.format(timestamp));
             }
 
-            id = template.queryForObject(SQL, Integer.class,
-                    post.getParent(), /*post.getUserId()*/ post.getAuthor(), thread.getForumId(),
-                    thread.getId(), post.getIsEdited(), post.getMessage(), timestamp);
-
-            post.setId(id);
-            post.setThread(thread.getId());
-            post.setForum(thread.getForum());
-            post.setCreated(DATE_FORMAT.format(timestamp));
+            preparedStatement.executeBatch();
+            preparedStatement.close();
+        } catch (SQLException e) {
+            // TODO try with res
+            System.out.println("preparedStatement errro");
+            throw e;
         }
     }
 

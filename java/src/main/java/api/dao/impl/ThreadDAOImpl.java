@@ -15,6 +15,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,6 +110,8 @@ public class ThreadDAOImpl implements ThreadDAO {
         final List<Object> args = new ArrayList<>();
         args.add(slug);
 
+
+
         if (since != null) {
             SQL.append(" AND created ");
 
@@ -116,7 +120,8 @@ public class ThreadDAOImpl implements ThreadDAO {
             } else {
                 SQL.append(">= ?");
             }
-            args.add(Timestamp.valueOf(LocalDateTime.parse(since, DateTimeFormatter.ISO_OFFSET_DATE_TIME)));
+            Timestamp timestamp = new Timestamp(ZonedDateTime.parse(since).toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli());
+            args.add(timestamp);
         }
 
         SQL.append(" ORDER BY created ");
@@ -127,6 +132,7 @@ public class ThreadDAOImpl implements ThreadDAO {
 
         SQL.append(" LIMIT ? ");
         args.add(limit);
+
 
         return template.query(SQL.toString(), THREAD_FORUM_USER_MAPPER, args.toArray());
     }

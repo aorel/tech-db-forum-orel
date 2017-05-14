@@ -5,12 +5,13 @@ import api.dao.ThreadDAO;
 import api.dao.ThreadVoteDAO;
 import api.models.*;
 
+import java.sql.BatchUpdateException;
+import java.sql.SQLException;
 import java.util.List;
 
 import api.models.Thread;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,8 @@ public class ThreadController {
             } else {
                 thread = threadDAO.getBySlugJoinAll(slugOrId);
             }
+        } catch (EmptyResultDataAccessException e) {
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -60,6 +63,8 @@ public class ThreadController {
             } else {
                 thread = threadDAO.getBySlugJoinForum(slugOrId);
             }
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
@@ -70,20 +75,21 @@ public class ThreadController {
             if (post.getParent() != null &&
                     post.getParent() != 0 &&
                     !children.contains(post.getParent())) {
-                System.out.println("No post parent");
+
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
         }
 
         try {
             postDAO.create(thread, posts);
+        } catch(BatchUpdateException e) {
+            // user not found
+            return ResponseEntity.notFound().build();
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (DataIntegrityViolationException e) {
-            //user not found
+        } catch (SQLException e) {
             e.printStackTrace();
-            return ResponseEntity.notFound().build();
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
@@ -170,9 +176,11 @@ public class ThreadController {
     public ResponseEntity slugVote(@PathVariable(name = "slugOrId") final String slugOrId,
                                    @RequestBody ThreadVote vote) {
         Thread thread = getThreadDetails(slugOrId);
+
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
+        System.out.println("/vote: " + slugOrId + ", thread.id=" + thread.getId());
 
         ThreadVote existingVote;
         try {
@@ -184,10 +192,13 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
+
         try {
             if (existingVote == null) {
+                System.out.println("create");
                 threadVoteDAO.create(thread, vote);
             } else {
+                System.out.println("insert " + existingVote.getId());
                 vote.setId(existingVote.getId());
                 threadVoteDAO.insert(vote);
             }
@@ -196,7 +207,10 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
-        threadVoteDAO.count(thread);
+//        System.out.println("   thread.getId()=" + thread.getId());
+//        System.out.println("thread.getVotes()=" + thread.getVotes());
+//        threadVoteDAO.count(thread);
+//        System.out.println();
 
         return ResponseEntity.ok(thread);
     }

@@ -12,6 +12,7 @@ import api.models.PostDetails;
 import api.models.PostUpdate;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +36,8 @@ public class PostController {
         Post post;
         try {
             post = postDAO.getById(id);
+        } catch(EmptyResultDataAccessException e) {
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
