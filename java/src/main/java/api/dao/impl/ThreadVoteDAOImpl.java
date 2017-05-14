@@ -43,9 +43,7 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
     @Override
     public void count(final Thread thread) {
         final String SQL = "SELECT sum(voice) FROM votes WHERE thread_id=?;";
-
         int votes = template.queryForObject(SQL, Integer.class, thread.getId());
-//        System.out.println("votes=" + votes);
         thread.setVotes(votes);
     }
 

@@ -180,7 +180,7 @@ public class ThreadController {
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
-        System.out.println("/vote: " + slugOrId + ", thread.id=" + thread.getId());
+//        System.out.println("/vote: " + slugOrId + ", thread.id=" + thread.getId());
 
         ThreadVote existingVote;
         try {
@@ -206,11 +206,7 @@ public class ThreadController {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
-
-//        System.out.println("   thread.getId()=" + thread.getId());
-//        System.out.println("thread.getVotes()=" + thread.getVotes());
-//        threadVoteDAO.count(thread);
-//        System.out.println();
+        threadVoteDAO.count(thread);
 
         return ResponseEntity.ok(thread);
     }
