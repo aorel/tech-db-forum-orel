@@ -195,10 +195,10 @@ public class ThreadController {
 
         try {
             if (existingVote == null) {
-                System.out.println("create");
+//                System.out.println("create");
                 threadVoteDAO.create(thread, vote);
             } else {
-                System.out.println("insert " + existingVote.getId());
+//                System.out.println("insert " + existingVote.getId());
                 vote.setId(existingVote.getId());
                 threadVoteDAO.insert(vote);
             }

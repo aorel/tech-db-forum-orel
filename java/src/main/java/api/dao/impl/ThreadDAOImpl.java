@@ -1,8 +1,7 @@
 package api.dao.impl;
 
+import api.Settings;
 import api.dao.ThreadDAO;
-import api.models.Forum;
-import api.models.Post;
 import api.models.Thread;
 import api.models.ThreadUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,17 +12,11 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class ThreadDAOImpl implements ThreadDAO {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+03:00'");
 
     private static final String SQL_JOIN_FORUM_BEGIN = "SELECT threads.id AS t_id, forums.id AS f_id, forums.slug AS f_slug " +
             "FROM threads " +
@@ -48,7 +41,7 @@ public class ThreadDAOImpl implements ThreadDAO {
             SQL = "INSERT INTO threads (title, user_id, forum_id, message, slug) VALUES (?, ?, ?, ?, ?) RETURNING id;";
             object = new Object[]{thread.getTitle(), thread.getUserId(), thread.getForumId(), thread.getMessage(), thread.getSlug()};
         } else {
-            Timestamp timestamp = Timestamp.valueOf(LocalDateTime.parse(thread.getCreated(), DateTimeFormatter.ISO_DATE_TIME));
+            Timestamp timestamp = Settings.timestampFromString(thread.getCreated());
 
             SQL = "INSERT INTO threads (title, user_id, forum_id, message, slug, created) VALUES (?, ?, ?, ?, ?, ?) RETURNING id;";
             object = new Object[]{thread.getTitle(), thread.getUserId(), thread.getForumId(), thread.getMessage(), thread.getSlug(), timestamp};
@@ -120,7 +113,8 @@ public class ThreadDAOImpl implements ThreadDAO {
             } else {
                 SQL.append(">= ?");
             }
-            Timestamp timestamp = new Timestamp(ZonedDateTime.parse(since).toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli());
+
+            Timestamp timestamp = Settings.timestampFromStringZone(since);
             args.add(timestamp);
         }
 
@@ -184,7 +178,7 @@ public class ThreadDAOImpl implements ThreadDAO {
             thread.setSlug(rs.getString("slug"));
 
             Timestamp created = rs.getTimestamp("created");
-            thread.setCreated(DATE_FORMAT.format(created));
+            thread.setCreated(Settings.DATE_FORMAT.format(created));
 
             return thread;
         }
@@ -212,7 +206,7 @@ public class ThreadDAOImpl implements ThreadDAO {
             thread.setForum(rs.getString("f_slug"));
 
             Timestamp created = rs.getTimestamp("created");
-            thread.setCreated(DATE_FORMAT.format(created));
+            thread.setCreated(Settings.DATE_FORMAT.format(created));
 
             return thread;
         }

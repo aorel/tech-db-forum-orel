@@ -1,5 +1,6 @@
 package api.models;
 
+import api.Settings;
 import com.fasterxml.jackson.annotation.*;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -118,7 +119,7 @@ public class Thread {
         this.slug = slug;
     }
 
-    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSX")
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern= Settings.DATE_FORMAT_PATTERN)
     public String getCreated() {
         return created;
     }

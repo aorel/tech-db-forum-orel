@@ -1,5 +1,6 @@
 package api.dao.impl;
 
+import api.Settings;
 import api.dao.PostDAO;
 import api.models.Post;
 import api.models.PostUpdate;
@@ -8,19 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class PostDAOImpl implements PostDAO {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+03:00'");
-
     private static final PostMapper POST_MAPPER = new PostMapper();
     private static final ParentMapper PARENT_MAPPER = new ParentMapper();
 
@@ -33,20 +28,17 @@ public class PostDAOImpl implements PostDAO {
         final String NEW_SQL = "INSERT INTO posts (id, parent_id, user_id, forum_id, thread_id, is_edited, message, created) " +
                 "VALUES (?, ?, (SELECT id FROM users WHERE nickname = ?), ?, ?, ?, ?, ?);";
 
-        LocalDateTime now = LocalDateTime.now();
-        System.out.println("thread posts: size=" + posts.size() + ", date=" + now);
         try (Connection connection = template.getDataSource().getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(NEW_SQL, Statement.NO_GENERATED_KEYS);
 
-            Timestamp timestamp;
+            Timestamp timestamp = Settings.timestampNow();
+            System.out.println("thread posts: size=" + posts.size() + ", date=" + timestamp);
             for (Post post : posts) {
                 // TODO generate next post.size() id!!!
                 final Integer new_id = template.queryForObject("SELECT nextval('posts_id_seq')", Integer.class);
 
                 if (post.getCreated() != null) {
-                    timestamp = Timestamp.valueOf(LocalDateTime.parse(post.getCreated(), DateTimeFormatter.ISO_DATE_TIME));
-                } else {
-                    timestamp = Timestamp.valueOf(LocalDateTime.parse(now.toString(), DateTimeFormatter.ISO_DATE_TIME));
+                    timestamp = Settings.timestampFromString(post.getCreated());
                 }
 
                 preparedStatement.setInt(1, new_id);
@@ -61,7 +53,7 @@ public class PostDAOImpl implements PostDAO {
                 post.setId(new_id);
                 post.setThread(thread.getId());
                 post.setForum(thread.getForum());
-                post.setCreated(DATE_FORMAT.format(timestamp));
+                post.setCreated(Settings.DATE_FORMAT.format(timestamp));
             }
 
             preparedStatement.executeBatch();
@@ -182,7 +174,7 @@ public class PostDAOImpl implements PostDAO {
             post.setMessage(rs.getString("message"));
 
             Timestamp created = rs.getTimestamp("created");
-            post.setCreated(DATE_FORMAT.format(created));
+            post.setCreated(Settings.DATE_FORMAT.format(created));
 
             return post;
         }
