@@ -6,18 +6,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
 @Repository
+@Transactional
 public class ForumDAOImpl implements ForumDAO {
     private static final ForumMapper FORUM_MAPPER = new ForumMapper();
     private static final ForumUserMapper FORUM_USER_MAPPER = new ForumUserMapper();
 
+    private final JdbcTemplate template;
+
     @Autowired
-    private JdbcTemplate template;
+    public ForumDAOImpl(JdbcTemplate template){
+        this.template = template;
+    }
 
     @Override
     public void create(final Forum forum) {

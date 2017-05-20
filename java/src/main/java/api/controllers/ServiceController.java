@@ -9,9 +9,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/service")
 public class ServiceController {
+    private final ServiceDAO serviceDAO;
 
     @Autowired
-    private ServiceDAO serviceDAO;
+    ServiceController(ServiceDAO serviceDAO) {
+        this.serviceDAO = serviceDAO;
+    }
 
     @PostMapping(path = "/clear")
     public ResponseEntity clear() {

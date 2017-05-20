@@ -1,5 +1,6 @@
 package api.controllers;
 
+import api.Settings;
 import api.dao.PostDAO;
 import api.dao.ThreadDAO;
 import api.dao.ThreadVoteDAO;
@@ -21,12 +22,16 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/thread")
 public class ThreadController {
+    private final ThreadDAO threadDAO;
+    private final ThreadVoteDAO threadVoteDAO;
+    private final PostDAO postDAO;
+
     @Autowired
-    private ThreadDAO threadDAO;
-    @Autowired
-    private ThreadVoteDAO threadVoteDAO;
-    @Autowired
-    private PostDAO postDAO;
+    ThreadController(ThreadDAO threadDAO, ThreadVoteDAO threadVoteDAO, PostDAO postDAO) {
+        this.threadDAO = threadDAO;
+        this.threadVoteDAO = threadVoteDAO;
+        this.postDAO = postDAO;
+    }
 
     @Nullable
     private Thread getThreadDetails(final String slugOrId) {
@@ -97,6 +102,8 @@ public class ThreadController {
 
     @GetMapping(path = "/{slugOrId}/details")
     public ResponseEntity getSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId) {
+        System.out.println("thread/{slugOrId}/details: " + slugOrId);
+
         Thread thread = getThreadDetails(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
@@ -104,6 +111,7 @@ public class ThreadController {
 
         threadDAO.getCountVotes(thread);
 
+        Settings.printObject(thread);
         return ResponseEntity.ok(thread);
 
     }
@@ -111,6 +119,8 @@ public class ThreadController {
     @PostMapping(path = "/{slugOrId}/details")
     public ResponseEntity setSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId,
                                          @RequestBody ThreadUpdate threadUpdate) {
+        System.out.println("thread/{slugOrId}/details: " + slugOrId);
+
         Thread thread = getThreadDetails(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
@@ -133,7 +143,7 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
-        Integer offset = 0;
+        Integer offset;
         if (marker.matches("\\d+")) {
             offset = Integer.parseInt(marker);
         } else {

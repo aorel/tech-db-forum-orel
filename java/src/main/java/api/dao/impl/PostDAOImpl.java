@@ -9,18 +9,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 @Repository
+@Transactional
 public class PostDAOImpl implements PostDAO {
     private static final PostMapper POST_MAPPER = new PostMapper();
     private static final ParentMapper PARENT_MAPPER = new ParentMapper();
 
+    private final JdbcTemplate template;
+
     @Autowired
-    private JdbcTemplate template;
+    public PostDAOImpl(JdbcTemplate template){
+        this.template = template;
+    }
 
     @Override
     public void create(Thread thread, List<Post> posts) throws SQLException {
@@ -32,7 +40,10 @@ public class PostDAOImpl implements PostDAO {
             PreparedStatement preparedStatement = connection.prepareStatement(NEW_SQL, Statement.NO_GENERATED_KEYS);
 
             Timestamp timestamp = Settings.timestampNow();
-            System.out.println("thread posts: size=" + posts.size() + ", date=" + timestamp);
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+//            System.out.println("thread posts: size=" + posts.size() + ", date=" + timestamp);
             for (Post post : posts) {
                 // TODO generate next post.size() id!!!
                 final Integer new_id = template.queryForObject("SELECT nextval('posts_id_seq')", Integer.class);
@@ -53,14 +64,14 @@ public class PostDAOImpl implements PostDAO {
                 post.setId(new_id);
                 post.setThread(thread.getId());
                 post.setForum(thread.getForum());
-                post.setCreated(Settings.DATE_FORMAT.format(timestamp));
+                post.setCreated(dateFormat.format(timestamp));
             }
 
             preparedStatement.executeBatch();
             preparedStatement.close();
         } catch (SQLException e) {
             // TODO try with res
-            System.out.println("preparedStatement errro");
+            System.out.println("preparedStatement error");
             throw e;
         }
     }
@@ -174,7 +185,9 @@ public class PostDAOImpl implements PostDAO {
             post.setMessage(rs.getString("message"));
 
             Timestamp created = rs.getTimestamp("created");
-            post.setCreated(Settings.DATE_FORMAT.format(created));
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            post.setCreated(dateFormat.format(created));
 
             return post;
         }

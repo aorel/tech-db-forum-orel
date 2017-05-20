@@ -19,17 +19,18 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(path = "/api/post")
 public class PostController {
-    @Autowired
-    private PostDAO postDAO;
+    private final PostDAO postDAO;
+    private final UserDAO userDAO;
+    private final ThreadDAO threadDAO;
+    private final ForumDAO forumDAO;
 
     @Autowired
-    private UserDAO userDAO;
-
-    @Autowired
-    private ThreadDAO threadDAO;
-
-    @Autowired
-    private ForumDAO forumDAO;
+    PostController(PostDAO postDAO, UserDAO userDAO, ThreadDAO threadDAO, ForumDAO forumDAO) {
+        this.postDAO = postDAO;
+        this.userDAO = userDAO;
+        this.threadDAO = threadDAO;
+        this.forumDAO = forumDAO;
+    }
 
     @Nullable
     private Post getPostDetails(final Integer id) {

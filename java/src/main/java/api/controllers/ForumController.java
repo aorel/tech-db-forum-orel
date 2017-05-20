@@ -20,13 +20,16 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/api/forum")
 public class ForumController {
-    @Autowired
-    private ForumDAO forumDAO;
-    @Autowired
-    private ThreadDAO threadDAO;
-    @Autowired
-    private UserDAO userDAO;
+    private final ForumDAO forumDAO;
+    private final ThreadDAO threadDAO;
+    private final UserDAO userDAO;
 
+    @Autowired
+    ForumController(ForumDAO forumDAO, ThreadDAO threadDAO, UserDAO userDAO) {
+        this.forumDAO = forumDAO;
+        this.threadDAO = threadDAO;
+        this.userDAO = userDAO;
+    }
 
     @Nullable
     private Forum getBySlug(final String slug) {

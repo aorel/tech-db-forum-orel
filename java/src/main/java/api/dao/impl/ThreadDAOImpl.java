@@ -8,14 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 @Repository
+@Transactional
 public class ThreadDAOImpl implements ThreadDAO {
 
     private static final String SQL_JOIN_FORUM_BEGIN = "SELECT threads.id AS t_id, forums.id AS f_id, forums.slug AS f_slug " +
@@ -30,8 +34,12 @@ public class ThreadDAOImpl implements ThreadDAO {
     private static final ThreadForumMapper THREAD_FORUM_MAPPER = new ThreadForumMapper();
     private static final ThreadForumUserMapper THREAD_FORUM_USER_MAPPER = new ThreadForumUserMapper();
 
+    private final JdbcTemplate template;
+
     @Autowired
-    private JdbcTemplate template;
+    public ThreadDAOImpl(JdbcTemplate template){
+        this.template = template;
+    }
 
     @Override
     public int create(final Thread thread) {
@@ -178,7 +186,9 @@ public class ThreadDAOImpl implements ThreadDAO {
             thread.setSlug(rs.getString("slug"));
 
             Timestamp created = rs.getTimestamp("created");
-            thread.setCreated(Settings.DATE_FORMAT.format(created));
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            thread.setCreated(dateFormat.format(created));
 
             return thread;
         }
@@ -206,7 +216,9 @@ public class ThreadDAOImpl implements ThreadDAO {
             thread.setForum(rs.getString("f_slug"));
 
             Timestamp created = rs.getTimestamp("created");
-            thread.setCreated(Settings.DATE_FORMAT.format(created));
+            SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            thread.setCreated(dateFormat.format(created));
 
             return thread;
         }

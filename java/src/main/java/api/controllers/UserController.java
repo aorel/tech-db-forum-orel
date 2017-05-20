@@ -15,8 +15,12 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/api/user")
 public class UserController {
+    private final UserDAO userDAO;
+
     @Autowired
-    private UserDAO userDAO;
+    UserController(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
 
     @PostMapping(path = "/{nickname}/create")
     public ResponseEntity create(@PathVariable(name = "nickname") final String nickname,

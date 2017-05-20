@@ -7,16 +7,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Repository
+@Transactional
 public class ThreadVoteDAOImpl implements ThreadVoteDAO {
     private static final ThreadVoteMapper THREAD_VOTE_MAPPER = new ThreadVoteMapper();
 
+    private final JdbcTemplate template;
+
     @Autowired
-    private JdbcTemplate template;
+    public ThreadVoteDAOImpl(JdbcTemplate template){
+        this.template = template;
+    }
 
     @Override
     public ThreadVote get(Thread thread, ThreadVote vote){

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,11 +14,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
+@Transactional
 public class UserDAOImpl implements UserDAO {
     private static final UserMapper USER_MAPPER = new UserMapper();
 
+    private final JdbcTemplate template;
+
     @Autowired
-    private JdbcTemplate template;
+    public UserDAOImpl(JdbcTemplate template){
+        this.template = template;
+    }
 
     @Override
     public void create(User user) {
