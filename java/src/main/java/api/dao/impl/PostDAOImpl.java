@@ -32,9 +32,8 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public void create(final Thread thread, final List<Post> posts) throws SQLException {
-        // TODO get user id?
         final String NEW_SQL = "INSERT INTO posts (id, parent_id, user_id, forum_id, thread_id, is_edited, message, created, path) " +
-                "VALUES (?, ?, (SELECT id FROM users WHERE nickname = ?), ?, ?, ?, ?, ?, " +
+                "VALUES (?, ?, (SELECT id FROM users WHERE LOWER(nickname) = LOWER(?)), ?, ?, ?, ?, ?, " +
                 "array_append((SELECT path FROM posts WHERE id = ?), ?));";
 
         try (Connection connection = template.getDataSource().getConnection()) {
@@ -73,15 +72,15 @@ public class PostDAOImpl implements PostDAO {
 
             preparedStatement.executeBatch();
             preparedStatement.close();
-
-            final String SQL_UP_FORUM = "UPDATE forums SET __posts = __posts + ? WHERE id = ?";
-            template.update(SQL_UP_FORUM, posts.size(), thread.getForumId());
         } catch (SQLException e) {
             // TODO try with res
             System.out.println("preparedStatement error");
-            e.printStackTrace();
+//            e.printStackTrace();
             throw e;
         }
+
+        final String SQL_UP_FORUM = "UPDATE forums SET __posts = __posts + ? WHERE id = ?;";
+        template.update(SQL_UP_FORUM, posts.size(), thread.getForumId());
     }
 
     @Override
@@ -105,7 +104,7 @@ public class PostDAOImpl implements PostDAO {
                 "JOIN forums f ON (p.forum_id = f.id) " +
                 "JOIN users u ON (u.id = p.user_id) " +
                 "WHERE p.thread_id = ?  " +
-                "ORDER BY p.path " + (desc ? "DESC" : "ASC") + " LIMIT ? OFFSET ?";
+                "ORDER BY p.path " + (desc ? "DESC" : "ASC") + " LIMIT ? OFFSET ?;";
 
         return template.query(SQL, POST_MAPPER, thread.getId(),
                 limit, offset);
@@ -129,7 +128,7 @@ public class PostDAOImpl implements PostDAO {
                 "JOIN forums f ON (p.forum_id = f.id) " +
                 "JOIN users u ON (u.id = p.user_id) " +
                 "WHERE p.path[1] = ? AND p.thread_id = ? " +
-                "ORDER BY path " + (desc ? "DESC" : "ASC") + ", p.id " + (desc ? "DESC" : "ASC");
+                "ORDER BY path " + (desc ? "DESC" : "ASC") + ", p.id " + (desc ? "DESC" : "ASC") + ";";
 
         List<Post> result = new ArrayList<>();
         for (Integer parent : parents) {
@@ -154,10 +153,7 @@ public class PostDAOImpl implements PostDAO {
             return;
         }
 
-        final String SQL = "UPDATE posts SET " +
-                "message = ?, " +
-                "is_edited = TRUE " +
-                "WHERE id = ?;";
+        final String SQL = "UPDATE posts SET message = ?, is_edited = TRUE WHERE id = ?;";
         template.update(SQL, postUpdate.getMessage(), post.getId());
 
         post.setMessage(postUpdate.getMessage());
@@ -166,9 +162,7 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public List<Integer> getChildren(final Integer thread_id) {
-        final String SQL = "SELECT id " +
-                "FROM posts " +
-                "WHERE thread_id=?;";
+        final String SQL = "SELECT id FROM posts WHERE thread_id=?;";
         return template.queryForList(SQL, Integer.class, thread_id);
     }
 

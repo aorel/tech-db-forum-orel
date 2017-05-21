@@ -17,7 +17,7 @@ public interface ThreadDAO {
 
     Thread getBySlugJoinAll(final String slug);
 
-    List<Thread> getByForumSlug(final String slug, final Integer limit, final String since, final Boolean desc);
+    List<Thread> getByForum(final Forum forum, final Integer limit, final String since, final Boolean desc);
 
     void update(final Thread thread, final ThreadUpdate threadUpdate);
 }

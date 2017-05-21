@@ -70,7 +70,7 @@ public class PostController {
                         postDetails.setThread(threadDAO.getByIdJoinAll(post.getThread()));
                         break;
                     case "forum":
-                        Forum forum = forumDAO.getBySlug(post.getForum());
+                        Forum forum = forumDAO.getBySlugJoinUser(post.getForum());
 
                         postDetails.setForum(forum);
                         break;

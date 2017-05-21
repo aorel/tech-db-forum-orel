@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 @Repository
 @Transactional
@@ -27,19 +26,19 @@ public class ForumDAOImpl implements ForumDAO {
 
     @Override
     public void create(final Forum forum) {
-        final String SQL = "INSERT INTO forums (title, user_id, slug) VALUES(?, ?, ?)";
+        final String SQL = "INSERT INTO forums (title, user_id, slug) VALUES(?, ?, ?);";
         template.update(SQL, forum.getTitle(), forum.getUserId(), forum.getSlug());
     }
 
     @Override
-    public List<Forum> getDuplicates(String slug) {
-        final String SQL = "SELECT * FROM forums WHERE LOWER(slug) = LOWER(?)";
-        return template.query(SQL, FORUM_MAPPER, slug);
+    public Forum getBySlug(String slug) {
+        final String SQL = "SELECT * FROM forums WHERE LOWER(slug) = LOWER(?);";
+        return template.queryForObject(SQL, FORUM_MAPPER, slug);
     }
 
     @Override
-    public Forum getBySlug(final String slug) {
-        final String SQL = "SELECT * FROM forums f JOIN users u ON u.id=f.user_id WHERE LOWER(slug) = LOWER(?)";
+    public Forum getBySlugJoinUser(final String slug) {
+        final String SQL = "SELECT * FROM forums f JOIN users u ON u.id=f.user_id WHERE LOWER(slug) = LOWER(?);";
         return template.queryForObject(SQL, FORUM_USER_MAPPER, slug);
     }
 

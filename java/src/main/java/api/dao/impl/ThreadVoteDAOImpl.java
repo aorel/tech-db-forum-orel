@@ -41,7 +41,7 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
 
 
         final String SQL_UP_THREAD = "UPDATE threads SET __votes = (SELECT SUM(voice) FROM votes " +
-                "WHERE (thread_id) = ?) WHERE id = ? RETURNING __votes";
+                "WHERE (thread_id) = ?) WHERE id = ? RETURNING __votes;";
         int votes =  template.queryForObject(SQL_UP_THREAD, Integer.class, thread.getId(), thread.getId());
         thread.setVotes(votes);
     }
@@ -53,7 +53,7 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
 
 
         final String SQL_UP_THREAD = "UPDATE threads SET __votes = (SELECT SUM(voice) FROM votes " +
-                "WHERE (thread_id) = ?) WHERE id = ? RETURNING __votes";
+                "WHERE (thread_id) = ?) WHERE id = ? RETURNING __votes;";
         int votes =  template.queryForObject(SQL_UP_THREAD, Integer.class, thread.getId(), thread.getId());
         thread.setVotes(votes);
     }

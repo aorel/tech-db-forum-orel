@@ -22,16 +22,15 @@ import java.util.TimeZone;
 @Repository
 @Transactional
 public class ThreadDAOImpl implements ThreadDAO {
-
     private static final String SQL_JOIN_FORUM_BEGIN = "SELECT threads.id AS t_id, forums.id AS f_id, forums.slug AS f_slug " +
             "FROM threads " +
             "JOIN forums ON forums.id=threads.forum_id ";
+
     private static final String SQL_JOIN_ALL_BEGIN = "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
             "threads.slug AS t_slug, forums.slug AS f_slug, created, __votes FROM threads " +
             "JOIN forums ON forums.id=threads.forum_id " +
             "JOIN users ON users.id=threads.user_id ";
 
-    private static final ThreadMapper THREAD_MAPPER = new ThreadMapper();
     private static final ThreadForumMapper THREAD_FORUM_MAPPER = new ThreadForumMapper();
     private static final ThreadForumUserMapper THREAD_FORUM_USER_MAPPER = new ThreadForumUserMapper();
 
@@ -57,7 +56,7 @@ public class ThreadDAOImpl implements ThreadDAO {
         }
         thread.setId(template.queryForObject(SQL, object, Integer.class));
 
-        final String SQL_UP_FORUM = "UPDATE forums SET __threads = __threads + 1 WHERE id = ?";
+        final String SQL_UP_FORUM = "UPDATE forums SET __threads = __threads + 1 WHERE id = ?;";
         template.update(SQL_UP_FORUM, thread.getForumId());
     }
 
@@ -78,54 +77,57 @@ public class ThreadDAOImpl implements ThreadDAO {
     @Override
     public Thread getBySlugJoinForum(final String slug) {
         final String SQL = SQL_JOIN_FORUM_BEGIN +
-                " WHERE LOWER(threads.slug) = LOWER(?);";
+                "WHERE LOWER(threads.slug) = LOWER(?);";
         return template.queryForObject(SQL, THREAD_FORUM_MAPPER, slug);
     }
 
     @Override
     public Thread getBySlugJoinAll(final String slug) {
         final String SQL = SQL_JOIN_ALL_BEGIN +
-                "WHERE LOWER(threads.slug) = LOWER(?)";
+                "WHERE LOWER(threads.slug) = LOWER(?);";
         return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, slug);
     }
 
     @Override
-    public List<Thread> getByForumSlug(final String slug, final Integer limit, final String since, final Boolean desc) {
-        final StringBuilder SQL = new StringBuilder("SELECT threads.id AS t_id, " +
-                "threads.title AS t_title, nickname, threads.message AS msg, " +
-                "threads.slug AS t_slug, forums.slug AS f_slug, created, __votes FROM threads " +
-                "JOIN forums ON forums.id=threads.forum_id " +
-                "JOIN users ON users.id=threads.user_id " +
-                "WHERE LOWER(forums.slug) = LOWER(?)");
-        final List<Object> args = new ArrayList<>();
-        args.add(slug);
+    public List<Thread> getByForum(final Forum forum, final Integer limit, final String since, final Boolean desc) {
+        final String SQL_BEGIN = "SELECT t.id AS t_id, " +
+                "t.title AS t_title, nickname, t.message AS msg, " +
+                "t.slug AS t_slug, f.slug AS f_slug, created, __votes " +
+                "FROM threads t " +
+                "JOIN forums f ON f.id=t.forum_id " +
+                "JOIN users u ON u.id=t.user_id " +
+                "WHERE f.id = ? ";
 
+        final StringBuilder sql = new StringBuilder(SQL_BEGIN);
+
+        final List<Object> args = new ArrayList<>();
+        args.add(forum.getId());
 
 
         if (since != null) {
-            SQL.append(" AND created ");
+            sql.append(" AND created ");
 
             if (desc != null && desc) {
-                SQL.append("<= ?");
+                sql.append("<= ?");
             } else {
-                SQL.append(">= ?");
+                sql.append(">= ?");
             }
 
             Timestamp timestamp = Settings.timestampFromStringZone(since);
             args.add(timestamp);
         }
 
-        SQL.append(" ORDER BY created ");
+        sql.append(" ORDER BY created ");
 
         if (desc != null && desc) {
-            SQL.append(" DESC ");
+            sql.append(" DESC ");
         }
 
-        SQL.append(" LIMIT ? ");
+        sql.append(" LIMIT ?;");
         args.add(limit);
 
 
-        return template.query(SQL.toString(), THREAD_FORUM_USER_MAPPER, args.toArray());
+        return template.query(sql.toString(), THREAD_FORUM_USER_MAPPER, args.toArray());
     }
 
     @Override
@@ -154,27 +156,6 @@ public class ThreadDAOImpl implements ThreadDAO {
         sql.append(" WHERE id = ?;");
         args.add(thread.getId());
         template.update(sql.toString(), args.toArray());
-    }
-
-    private static final class ThreadMapper implements RowMapper<Thread> {
-        public Thread mapRow(ResultSet rs, int rowNum) throws SQLException {
-            final Thread thread = new Thread();
-            thread.setId(rs.getInt("id"));
-            thread.setTitle(rs.getString("title"));
-            thread.setUserId(rs.getInt("user_id"));
-            thread.setForumId(rs.getInt("forum_id"));
-            thread.setMessage(rs.getString("message"));
-            thread.setSlug(rs.getString("slug"));
-
-            Timestamp created = rs.getTimestamp("created");
-            SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
-            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-            thread.setCreated(dateFormat.format(created));
-
-            thread.setVotes(rs.getInt("__votes"));
-
-            return thread;
-        }
     }
 
     private static final class ThreadForumMapper implements RowMapper<Thread> {

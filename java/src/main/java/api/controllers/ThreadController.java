@@ -1,6 +1,5 @@
 package api.controllers;
 
-import api.Settings;
 import api.dao.PostDAO;
 import api.dao.ThreadDAO;
 import api.dao.ThreadVoteDAO;
@@ -13,6 +12,7 @@ import java.util.List;
 import api.models.Thread;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -34,7 +34,7 @@ public class ThreadController {
     }
 
     @Nullable
-    private Thread getThreadDetails(final String slugOrId) {
+    private Thread getBySlugOrIdJoinAll(final String slugOrId) {
         Thread thread;
         try {
             if (slugOrId.matches("\\d+")) {
@@ -87,13 +87,13 @@ public class ThreadController {
         try {
             postDAO.create(thread, posts);
         } catch(BatchUpdateException e) {
-            // user not found
             return ResponseEntity.notFound().build();
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (SQLException e) {
             e.printStackTrace();
+            return ResponseEntity.notFound().build();
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
@@ -102,7 +102,7 @@ public class ThreadController {
     @GetMapping(path = "/{slugOrId}/details")
     public ResponseEntity getSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId) {
 
-        Thread thread = getThreadDetails(slugOrId);
+        Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
@@ -118,7 +118,7 @@ public class ThreadController {
                                          @RequestBody ThreadUpdate threadUpdate) {
         System.out.println("(post) thread/{slugOrId}/details: " + slugOrId);
 
-        Thread thread = getThreadDetails(slugOrId);
+        Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
@@ -134,8 +134,7 @@ public class ThreadController {
                                     @RequestParam(name = "marker", required = false, defaultValue = "0") final String marker,
                                     @RequestParam(name = "sort", required = false, defaultValue = "flat") final String sort,
                                     @RequestParam(name = "desc", required = false, defaultValue = "false") final Boolean desc) {
-
-        Thread thread = getThreadDetails(slugOrId);
+        Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
@@ -186,14 +185,12 @@ public class ThreadController {
     @PostMapping(path = "/{slugOrId}/vote")
     public ResponseEntity slugVote(@PathVariable(name = "slugOrId") final String slugOrId,
                                    @RequestBody ThreadVote vote) {
-        System.out.println("(post) thread/{slugOrId}/vote: " + slugOrId);
+        System.out.println("(post) thread/" + slugOrId + "/vote");
 
-        Thread thread = getThreadDetails(slugOrId);
-
+        Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
-//        System.out.println("/vote: " + slugOrId + ", thread.id=" + thread.getId());
 
         ThreadVote existingVote;
         try {
@@ -205,7 +202,6 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
-
         try {
             if (existingVote == null) {
                 threadVoteDAO.create(thread, vote);
@@ -213,6 +209,8 @@ public class ThreadController {
                 vote.setId(existingVote.getId());
                 threadVoteDAO.insert(thread, vote);
             }
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();

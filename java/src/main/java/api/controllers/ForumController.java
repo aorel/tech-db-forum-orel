@@ -45,6 +45,20 @@ public class ForumController {
         return forum;
     }
 
+    @Nullable
+    private Forum getBySlugJoinUser(final String slug) {
+        Forum forum;
+        try {
+            forum = forumDAO.getBySlugJoinUser(slug);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return forum;
+    }
+
     @PostMapping(path = "/create")
     public ResponseEntity create(@RequestBody Forum newForum) {
 
@@ -63,13 +77,10 @@ public class ForumController {
         try {
             forumDAO.create(newForum);
         } catch (DuplicateKeyException e) {
-            e.printStackTrace();
-
-            Forum forum = getBySlug(newForum.getSlug());
+            Forum forum = getBySlugJoinUser(newForum.getSlug());
             if (forum == null) {
                 return ResponseEntity.notFound().build();
             }
-
             return ResponseEntity.status(HttpStatus.CONFLICT).body(forum);
         } catch (DataAccessException e) {
             return ResponseEntity.notFound().build();
@@ -83,7 +94,7 @@ public class ForumController {
 
     @GetMapping(path = "/{slug}/details")
     public ResponseEntity slugDetails(@PathVariable(name = "slug") final String slug) {
-        Forum forum = getBySlug(slug);
+        Forum forum = getBySlugJoinUser(slug);
         if (forum == null) {
             return ResponseEntity.notFound().build();
         }
@@ -107,7 +118,7 @@ public class ForumController {
             return ResponseEntity.notFound().build();
         }
 
-        Forum forum = getBySlug(slug);
+        Forum forum = getBySlugJoinUser(slug);
         if (forum == null) {
             return ResponseEntity.notFound().build();
         }
@@ -119,8 +130,6 @@ public class ForumController {
         try {
             threadDAO.create(thread);
         } catch (DuplicateKeyException e) {
-            e.printStackTrace();
-
             Thread duplicatedThread = threadDAO.getBySlugJoinAll(thread.getSlug());
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicatedThread);
         } catch (Exception e) {
@@ -138,13 +147,15 @@ public class ForumController {
                                     @RequestParam(name = "since", required = false) final String since,
                                     @RequestParam(name = "desc", required = false) final Boolean desc) {
 
-        Forum forum = getBySlug(slug);
+        Forum forum = getBySlugJoinUser(slug);
         if (forum == null) {
             return ResponseEntity.notFound().build();
         }
 
         List<User> users = userDAO.getForumUsers(forum, limit, since, desc);
 
+        System.out.println("( get) forum/" + slug +"/users" +
+                " [id=" + forum.getId() + "]");
         return ResponseEntity.ok(users);
     }
 
@@ -153,27 +164,21 @@ public class ForumController {
                                       @RequestParam(name = "limit", required = false) final Integer limit,
                                       @RequestParam(name = "since", required = false) final String since,
                                       @RequestParam(name = "desc", required = false) final Boolean desc) {
-        final List<Forum> forumDuplicates;
-        try {
-            forumDuplicates = forumDAO.getDuplicates(slug);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.notFound().build();
-        }
-        if (forumDuplicates.isEmpty()){
+        final Forum forum = getBySlug(slug);
+        if (forum == null) {
             return ResponseEntity.notFound().build();
         }
 
-        final List<Thread> threadDuplicates;
+        final List<Thread> threads;
         try {
-            threadDuplicates = threadDAO.getByForumSlug(slug, limit, since, desc);
+            threads = threadDAO.getByForum(forum, limit, since, desc);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
 
         System.out.println("( get) forum/" + slug +"/threads" +
-                " [len=" + threadDuplicates.size() + "]");
-        return ResponseEntity.ok(threadDuplicates);
+                " [len=" + threads.size() + "]");
+        return ResponseEntity.ok(threads);
     }
 }

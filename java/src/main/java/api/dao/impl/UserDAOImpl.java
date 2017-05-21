@@ -69,7 +69,7 @@ public class UserDAOImpl implements UserDAO {
         }
 
         sql.deleteCharAt(sql.length() - 1);
-        sql.append(" WHERE LOWER(nickname) = LOWER(?)");
+        sql.append(" WHERE LOWER(nickname) = LOWER(?);");
         args.add(user.getNickname());
         template.update(sql.toString(), args.toArray());
     }
@@ -83,32 +83,32 @@ public class UserDAOImpl implements UserDAO {
                 "FROM forum_users " +
                 "WHERE forum_id = ?" +
                 ") ";
-        final StringBuilder SQL = new StringBuilder(SQL_BEGIN);
+        final StringBuilder sql = new StringBuilder(SQL_BEGIN);
 
         final List<Object> args = new ArrayList<>();
         args.add(forum.getId());
 
         if (since != null) {
             if (desc != null && desc) {
-                SQL.append("AND LOWER(nickname) < LOWER(?) ");
+                sql.append("AND LOWER(nickname) < LOWER(?) ");
             } else {
-                SQL.append("AND LOWER(nickname) > LOWER(?) ");
+                sql.append("AND LOWER(nickname) > LOWER(?) ");
             }
             args.add(since);
         }
 
-        SQL.append("ORDER BY nickname ");
+        sql.append("ORDER BY nickname ");
         if (desc != null) {
-            SQL.append((desc ? "DESC" : "ASC"));
+            sql.append((desc ? "DESC" : "ASC"));
         }
         if (limit != null) {
-            SQL.append(" LIMIT ? ");
+            sql.append(" LIMIT ? ");
             args.add(limit);
         }
 
-        SQL.append(";");
+        sql.append(";");
 
-        return template.query(SQL.toString(), args.toArray(), USER_MAPPER);
+        return template.query(sql.toString(), args.toArray(), USER_MAPPER);
     }
 
     private static final class UserMapper implements RowMapper<User> {
