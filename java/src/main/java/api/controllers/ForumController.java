@@ -88,9 +88,8 @@ public class ForumController {
             return ResponseEntity.notFound().build();
         }
 
-        forumDAO.getCountPosts(forum);
-        forumDAO.getCountThreads(forum);
-
+        System.out.println("( get) forum/" + slug +"/details" +
+                " [id=" + forum.getId() + "]");
         return ResponseEntity.ok(forum);
     }
 
@@ -118,8 +117,7 @@ public class ForumController {
         thread.setForum(forum.getSlug());
 
         try {
-            int newId = threadDAO.create(thread);
-            thread.setId(newId);
+            threadDAO.create(thread);
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
 
@@ -145,7 +143,7 @@ public class ForumController {
             return ResponseEntity.notFound().build();
         }
 
-        List<User> users = userDAO.getForumUsers(slug, limit, since, desc);
+        List<User> users = userDAO.getForumUsers(forum, limit, since, desc);
 
         return ResponseEntity.ok(users);
     }
@@ -174,6 +172,8 @@ public class ForumController {
             return ResponseEntity.notFound().build();
         }
 
+        System.out.println("( get) forum/" + slug +"/threads" +
+                " [len=" + threadDuplicates.size() + "]");
         return ResponseEntity.ok(threadDuplicates);
     }
 }

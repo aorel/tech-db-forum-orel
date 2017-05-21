@@ -31,7 +31,7 @@ public class Settings {
 
     public static void printObject(Object o) {
         try {
-            System.out.println(objectMapper.writeValueAsString(o));
+            System.out.println("     " + objectMapper.writeValueAsString(o));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

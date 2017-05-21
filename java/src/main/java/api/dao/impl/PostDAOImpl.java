@@ -31,10 +31,11 @@ public class PostDAOImpl implements PostDAO {
     }
 
     @Override
-    public void create(Thread thread, List<Post> posts) throws SQLException {
+    public void create(final Thread thread, final List<Post> posts) throws SQLException {
         // TODO get user id?
-        final String NEW_SQL = "INSERT INTO posts (id, parent_id, user_id, forum_id, thread_id, is_edited, message, created) " +
-                "VALUES (?, ?, (SELECT id FROM users WHERE nickname = ?), ?, ?, ?, ?, ?);";
+        final String NEW_SQL = "INSERT INTO posts (id, parent_id, user_id, forum_id, thread_id, is_edited, message, created, path) " +
+                "VALUES (?, ?, (SELECT id FROM users WHERE nickname = ?), ?, ?, ?, ?, ?, " +
+                "array_append((SELECT path FROM posts WHERE id = ?), ?));";
 
         try (Connection connection = template.getDataSource().getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(NEW_SQL, Statement.NO_GENERATED_KEYS);
@@ -46,13 +47,13 @@ public class PostDAOImpl implements PostDAO {
 //            System.out.println("thread posts: size=" + posts.size() + ", date=" + timestamp);
             for (Post post : posts) {
                 // TODO generate next post.size() id!!!
-                final Integer new_id = template.queryForObject("SELECT nextval('posts_id_seq')", Integer.class);
+                post.setId(template.queryForObject("SELECT nextval('posts_id_seq')", Integer.class));
 
                 if (post.getCreated() != null) {
                     timestamp = Settings.timestampFromString(post.getCreated());
                 }
 
-                preparedStatement.setInt(1, new_id);
+                preparedStatement.setInt(1, post.getId());
                 preparedStatement.setInt(2, post.getParent());
                 preparedStatement.setString(3, post.getAuthor());
                 preparedStatement.setInt(4, thread.getForumId());
@@ -60,8 +61,11 @@ public class PostDAOImpl implements PostDAO {
                 preparedStatement.setBoolean(6, post.getIsEdited());
                 preparedStatement.setString(7, post.getMessage());
                 preparedStatement.setTimestamp(8, timestamp);
+                preparedStatement.setInt(9, post.getParent());
+                preparedStatement.setInt(10, post.getId());
+
                 preparedStatement.addBatch();
-                post.setId(new_id);
+
                 post.setThread(thread.getId());
                 post.setForum(thread.getForum());
                 post.setCreated(dateFormat.format(timestamp));
@@ -69,78 +73,73 @@ public class PostDAOImpl implements PostDAO {
 
             preparedStatement.executeBatch();
             preparedStatement.close();
+
+            final String SQL_UP_FORUM = "UPDATE forums SET __posts = __posts + ? WHERE id = ?";
+            template.update(SQL_UP_FORUM, posts.size(), thread.getForumId());
         } catch (SQLException e) {
             // TODO try with res
             System.out.println("preparedStatement error");
+            e.printStackTrace();
             throw e;
         }
     }
 
     @Override
-    public List<Post> getPostsFlat(Thread thread, Integer limit, Integer offset, Boolean desc) {
+    public List<Post> getPostsFlat(final Thread thread, final Integer limit, final Integer offset, final Boolean desc) {
         final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
                 "FROM posts p " +
-                "JOIN threads t ON (p.thread_id = t.id AND t.slug = ?) " +
-                "JOIN forums f ON (t.forum_id = f.id)" +
+                "JOIN forums f ON (p.forum_id = f.id)" +
                 "JOIN users u ON (u.id = p.user_id) " +
+                "WHERE p.thread_id = ? " +
                 "ORDER BY created " + (desc ? "DESC" : "ASC") + ", id " + (desc ? "DESC" : "ASC") + " " +
                 "LIMIT ? OFFSET ?;";
 
-        return template.query(SQL, POST_MAPPER, thread.getSlug(),
+        return template.query(SQL, POST_MAPPER, thread.getId(),
                 limit, offset);
     }
 
     @Override
-    public List<Post> getPostsTree(Thread thread, Integer limit, Integer offset, Boolean desc) {
-        final String SQL = "WITH RECURSIVE tree (id, user_id, created, forum_id, is_edited, message, parent_id, thread_id, z_posts) AS ( " +
-                "SELECT id, user_id, created, forum_id, is_edited, message, parent_id, thread_id, array[id] FROM posts WHERE parent_id = 0 " +
-                "UNION ALL " +
-                "SELECT p.id, p.user_id, p.created, p.forum_id, p.is_edited, p.message, p.parent_id, p.thread_id, array_append(z_posts, p.id) FROM posts p " +
-                "JOIN tree ON tree.id = p.parent_id) " +
-                "SELECT tr.id, nickname, tr.created, f.slug, is_edited, tr.message, tr.parent_id, tr.thread_id, z_posts AS z_posts FROM tree tr " +
-                "JOIN threads t ON (tr.thread_id = t.id AND t.slug = ?) " +
-                "JOIN forums f ON (t.forum_id = f.id) " +
-                "JOIN users u ON (u.id = tr.user_id) " +
-                "ORDER BY z_posts " + (desc ? "DESC" : "ASC") + ", id " + (desc ? "DESC" : "ASC") + " " +
-                "LIMIT ? OFFSET ?;";
+    public List<Post> getPostsTree(final Thread thread, final Integer limit, final Integer offset, final Boolean desc) {
+        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
+                "FROM posts p " +
+                "JOIN forums f ON (p.forum_id = f.id) " +
+                "JOIN users u ON (u.id = p.user_id) " +
+                "WHERE p.thread_id = ?  " +
+                "ORDER BY p.path " + (desc ? "DESC" : "ASC") + " LIMIT ? OFFSET ?";
 
-        return template.query(SQL, POST_MAPPER, thread.getSlug(),
+        return template.query(SQL, POST_MAPPER, thread.getId(),
                 limit, offset);
     }
 
     @Override
-    public List<Integer> getParents(Thread thread, Integer limit, Integer offset, Boolean desc) {
+    public List<Integer> getParents(final Thread thread, final Integer limit, final Integer offset, final Boolean desc) {
         final String SQL = "SELECT p.id FROM posts p " +
                 "JOIN threads t ON (t.id = p.thread_id) " +
-                "WHERE parent_id = 0 AND t.slug = ? " +
+                "WHERE parent_id = 0 AND t.id = ? " +
                 "ORDER BY p.id " + (desc ? "DESC" : "ASC") + ", id LIMIT ? OFFSET ?;";
 
-        return template.query(SQL, PARENT_MAPPER, thread.getSlug(),
+        return template.query(SQL, PARENT_MAPPER, thread.getId(),
                 limit, offset);
     }
 
     @Override
-    public List<Post> getPostsParentTree(Thread thread, Boolean desc, List<Integer> parents) {
-        List<Post> result = new ArrayList<>();
+    public List<Post> getPostsParentTree(final Thread thread, final Boolean desc, final List<Integer> parents) {
+        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
+                "FROM posts p " +
+                "JOIN forums f ON (p.forum_id = f.id) " +
+                "JOIN users u ON (u.id = p.user_id) " +
+                "WHERE p.path[1] = ? AND p.thread_id = ? " +
+                "ORDER BY path " + (desc ? "DESC" : "ASC") + ", p.id " + (desc ? "DESC" : "ASC");
 
-        final String SQL = "WITH RECURSIVE tree (id, user_id, created, forum_id, is_edited, message, parent_id, thread_id, z_posts) AS ( " +
-                "SELECT id, user_id, created, forum_id, is_edited, message, parent_id, thread_id, array[id] FROM posts WHERE id = ? " +
-                "UNION ALL " +
-                "SELECT p.id, p.user_id, p.created, p.forum_id, p.is_edited, p.message, p.parent_id, p.thread_id, array_append(z_posts, p.id) FROM posts p " +
-                "JOIN tree ON tree.id = p.parent_id) " +
-                "SELECT tr.id, nickname, tr.created, f.slug, is_edited, tr.message, tr.parent_id, tr.thread_id, z_posts AS z_posts FROM tree tr " +
-                "JOIN threads t ON (tr.thread_id = t.id AND t.slug = ?) " +
-                "JOIN forums f ON (t.forum_id = f.id) " +
-                "JOIN users u ON (u.id = tr.user_id) " +
-                "ORDER BY z_posts " + (desc ? "DESC" : "ASC") + ", id " + (desc ? "DESC" : "ASC");
+        List<Post> result = new ArrayList<>();
         for (Integer parent : parents) {
-            result.addAll(template.query(SQL, POST_MAPPER, parent, thread.getSlug()));
+            result.addAll(template.query(SQL, POST_MAPPER, parent, thread.getId()));
         }
         return result;
     }
 
     @Override
-    public Post getById(Integer id) {
+    public Post getById(final Integer id) {
         final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
                 "FROM posts p " +
                 "JOIN threads t ON (p.thread_id = t.id AND p.id=?) " +
@@ -150,7 +149,7 @@ public class PostDAOImpl implements PostDAO {
     }
 
     @Override
-    public void update(Post post, PostUpdate postUpdate) {
+    public void update(final Post post, final PostUpdate postUpdate) {
         if(post.getMessage().equals(postUpdate.getMessage())){
             return;
         }
@@ -166,7 +165,7 @@ public class PostDAOImpl implements PostDAO {
     }
 
     @Override
-    public List<Integer> getChildren(Integer thread_id) {
+    public List<Integer> getChildren(final Integer thread_id) {
         final String SQL = "SELECT id " +
                 "FROM posts " +
                 "WHERE thread_id=?;";

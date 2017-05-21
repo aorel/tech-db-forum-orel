@@ -8,19 +8,19 @@ import java.sql.SQLException;
 import java.util.List;
 
 public interface PostDAO {
-    void create(Thread thread, List<Post> posts) throws SQLException;
+    void create(final Thread thread, final List<Post> posts) throws SQLException;
 
-    List<Post> getPostsFlat(Thread thread, Integer limit, Integer offset, Boolean desc);
+    List<Post> getPostsFlat(final Thread thread, final Integer limit, final Integer offset, final Boolean desc);
 
-    List<Post> getPostsTree(Thread thread, Integer limit, Integer offset, Boolean desc);
+    List<Post> getPostsTree(final Thread thread, final Integer limit, final Integer offset, final Boolean desc);
 
-    List<Integer> getParents(Thread thread, Integer limit, Integer offset, Boolean desc);
+    List<Integer> getParents(final Thread thread, final Integer limit, final Integer offset, final Boolean desc);
 
-    List<Post> getPostsParentTree(Thread thread, Boolean desc, List<Integer> parents);
+    List<Post> getPostsParentTree(final Thread thread, final Boolean desc, final List<Integer> parents);
 
-    Post getById(Integer id);
+    Post getById(final Integer id);
 
-    void update(Post post, PostUpdate postUpdate);
+    void update(final Post post, final PostUpdate postUpdate);
 
-    List<Integer> getChildren(Integer thread_id);
+    List<Integer> getChildren(final Integer thread_id);
 }

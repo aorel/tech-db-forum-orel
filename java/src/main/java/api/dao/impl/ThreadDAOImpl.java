@@ -2,6 +2,7 @@ package api.dao.impl;
 
 import api.Settings;
 import api.dao.ThreadDAO;
+import api.models.Forum;
 import api.models.Thread;
 import api.models.ThreadUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class ThreadDAOImpl implements ThreadDAO {
             "FROM threads " +
             "JOIN forums ON forums.id=threads.forum_id ";
     private static final String SQL_JOIN_ALL_BEGIN = "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
-            "threads.slug AS t_slug, forums.slug AS f_slug, created FROM threads " +
+            "threads.slug AS t_slug, forums.slug AS f_slug, created, __votes FROM threads " +
             "JOIN forums ON forums.id=threads.forum_id " +
             "JOIN users ON users.id=threads.user_id ";
 
@@ -42,8 +43,8 @@ public class ThreadDAOImpl implements ThreadDAO {
     }
 
     @Override
-    public int create(final Thread thread) {
-        String SQL;
+    public void create(final Thread thread) {
+        final String SQL;
         Object[] object;
         if (thread.getCreated() == null) {
             SQL = "INSERT INTO threads (title, user_id, forum_id, message, slug) VALUES (?, ?, ?, ?, ?) RETURNING id;";
@@ -54,8 +55,10 @@ public class ThreadDAOImpl implements ThreadDAO {
             SQL = "INSERT INTO threads (title, user_id, forum_id, message, slug, created) VALUES (?, ?, ?, ?, ?, ?) RETURNING id;";
             object = new Object[]{thread.getTitle(), thread.getUserId(), thread.getForumId(), thread.getMessage(), thread.getSlug(), timestamp};
         }
+        thread.setId(template.queryForObject(SQL, object, Integer.class));
 
-        return template.queryForObject(SQL, object, Integer.class);
+        final String SQL_UP_FORUM = "UPDATE forums SET __threads = __threads + 1 WHERE id = ?";
+        template.update(SQL_UP_FORUM, thread.getForumId());
     }
 
     @Override
@@ -70,20 +73,6 @@ public class ThreadDAOImpl implements ThreadDAO {
         final String SQL = SQL_JOIN_ALL_BEGIN +
                 "WHERE threads.id=?;";
         return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, id);
-    }
-
-    @Override
-    public Thread getById(final Integer id) {
-        final String SQL = "SELECT * FROM threads " +
-                "WHERE id = ?";
-        return template.queryForObject(SQL, THREAD_MAPPER, id);
-    }
-
-    @Override
-    public Thread getBySlug(final String slug) {
-        final String SQL = "SELECT * FROM threads " +
-                "WHERE LOWER(slug) = LOWER(?)";
-        return template.queryForObject(SQL, THREAD_MAPPER, slug);
     }
 
     @Override
@@ -104,7 +93,7 @@ public class ThreadDAOImpl implements ThreadDAO {
     public List<Thread> getByForumSlug(final String slug, final Integer limit, final String since, final Boolean desc) {
         final StringBuilder SQL = new StringBuilder("SELECT threads.id AS t_id, " +
                 "threads.title AS t_title, nickname, threads.message AS msg, " +
-                "threads.slug AS t_slug, forums.slug AS f_slug, created FROM threads " +
+                "threads.slug AS t_slug, forums.slug AS f_slug, created, __votes FROM threads " +
                 "JOIN forums ON forums.id=threads.forum_id " +
                 "JOIN users ON users.id=threads.user_id " +
                 "WHERE LOWER(forums.slug) = LOWER(?)");
@@ -140,7 +129,7 @@ public class ThreadDAOImpl implements ThreadDAO {
     }
 
     @Override
-    public void update(Thread thread, ThreadUpdate threadUpdate) {
+    public void update(final Thread thread, final ThreadUpdate threadUpdate) {
         final StringBuilder sql = new StringBuilder("UPDATE threads SET");
         final List<Object> args = new ArrayList<>();
 
@@ -167,14 +156,6 @@ public class ThreadDAOImpl implements ThreadDAO {
         template.update(sql.toString(), args.toArray());
     }
 
-    @Override
-    public void getCountVotes(Thread thread) {
-        final String SQL = "SELECT count(*) FROM votes " +
-                "WHERE thread_id = ?;";
-
-        thread.setVotes(template.queryForObject(SQL, Integer.class, thread.getId()));
-    }
-
     private static final class ThreadMapper implements RowMapper<Thread> {
         public Thread mapRow(ResultSet rs, int rowNum) throws SQLException {
             final Thread thread = new Thread();
@@ -189,6 +170,8 @@ public class ThreadDAOImpl implements ThreadDAO {
             SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
             dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
             thread.setCreated(dateFormat.format(created));
+
+            thread.setVotes(rs.getInt("__votes"));
 
             return thread;
         }
@@ -219,6 +202,8 @@ public class ThreadDAOImpl implements ThreadDAO {
             SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
             dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
             thread.setCreated(dateFormat.format(created));
+
+            thread.setVotes(rs.getInt("__votes"));
 
             return thread;
         }

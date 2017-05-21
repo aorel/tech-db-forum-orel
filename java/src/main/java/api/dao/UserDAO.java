@@ -1,17 +1,18 @@
 package api.dao;
 
+import api.models.Forum;
 import api.models.User;
 
 import java.util.List;
 
 public interface UserDAO {
-    void create(User user);
+    void create(final User user);
 
-    List<User> getDuplicates(User user);
+    List<User> getDuplicates(final User user);
 
-    User getProfile(String nickname);
+    User getProfile(final String nickname);
 
-    void setProfile(User user);
+    void setProfile(final User user);
 
-    List<User> getForumUsers(String slug, Integer limit, String since, Boolean desc);
+    List<User> getForumUsers(final Forum forum, final Integer limit, final String since, final Boolean desc);
 }

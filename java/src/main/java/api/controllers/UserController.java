@@ -44,7 +44,6 @@ public class UserController {
 
     @GetMapping(path = "/{nickname}/profile")
     public ResponseEntity getProfile(@PathVariable(name = "nickname") final String nickname) {
-
         User user;
         try {
             user = userDAO.getProfile(nickname);
@@ -54,6 +53,8 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
+
+        System.out.println("( get) user/" + nickname + "/profile");
         return ResponseEntity.ok(user);
     }
 

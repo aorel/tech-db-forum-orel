@@ -80,7 +80,6 @@ public class ThreadController {
             if (post.getParent() != null &&
                     post.getParent() != 0 &&
                     !children.contains(post.getParent())) {
-
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
         }
@@ -102,16 +101,14 @@ public class ThreadController {
 
     @GetMapping(path = "/{slugOrId}/details")
     public ResponseEntity getSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId) {
-        System.out.println("thread/{slugOrId}/details: " + slugOrId);
 
         Thread thread = getThreadDetails(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
 
-        threadDAO.getCountVotes(thread);
-
-        Settings.printObject(thread);
+        System.out.println("( get) thread/" + slugOrId + "/details");
+//        Settings.printObject(thread);
         return ResponseEntity.ok(thread);
 
     }
@@ -119,7 +116,7 @@ public class ThreadController {
     @PostMapping(path = "/{slugOrId}/details")
     public ResponseEntity setSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId,
                                          @RequestBody ThreadUpdate threadUpdate) {
-        System.out.println("thread/{slugOrId}/details: " + slugOrId);
+        System.out.println("(post) thread/{slugOrId}/details: " + slugOrId);
 
         Thread thread = getThreadDetails(slugOrId);
         if (thread == null) {
@@ -179,12 +176,18 @@ public class ThreadController {
 
         offset += size;
         posts.setMarker(offset.toString());
+
+        System.out.println("( get) thread/" + slugOrId +
+                "/posts?limit=" + limit + "&marker=" + marker + "&sort=" + sort + "&desc=" + desc +
+                " [id=" + thread.getId() + "]");
         return ResponseEntity.ok(posts);
     }
 
     @PostMapping(path = "/{slugOrId}/vote")
     public ResponseEntity slugVote(@PathVariable(name = "slugOrId") final String slugOrId,
                                    @RequestBody ThreadVote vote) {
+        System.out.println("(post) thread/{slugOrId}/vote: " + slugOrId);
+
         Thread thread = getThreadDetails(slugOrId);
 
         if (thread == null) {
@@ -205,18 +208,15 @@ public class ThreadController {
 
         try {
             if (existingVote == null) {
-//                System.out.println("create");
                 threadVoteDAO.create(thread, vote);
             } else {
-//                System.out.println("insert " + existingVote.getId());
                 vote.setId(existingVote.getId());
-                threadVoteDAO.insert(vote);
+                threadVoteDAO.insert(thread, vote);
             }
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
-        threadVoteDAO.count(thread);
 
         return ResponseEntity.ok(thread);
     }

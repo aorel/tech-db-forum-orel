@@ -7,7 +7,7 @@ public class Post {
     @JsonProperty
     private int id;
     @JsonProperty
-    private Integer parent;
+    private Integer parent = 0;
     @JsonProperty
     private boolean isEdited;
     @JsonProperty

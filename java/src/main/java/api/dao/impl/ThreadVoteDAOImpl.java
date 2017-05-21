@@ -25,7 +25,7 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
     }
 
     @Override
-    public ThreadVote get(Thread thread, ThreadVote vote){
+    public ThreadVote get(final Thread thread, final ThreadVote vote){
         final String SQL = "SELECT votes.id AS v_id " +
                 "FROM votes " +
                 "JOIN users on users.id=votes.user_id " +
@@ -38,21 +38,25 @@ public class ThreadVoteDAOImpl implements ThreadVoteDAO {
         final String SQL = "INSERT INTO votes (user_id, thread_id, voice) " +
                 "VALUES ((SELECT id FROM users WHERE LOWER(nickname) = LOWER(?)), ?, ?);";
         template.update(SQL, vote.getNickname(), thread.getId(), vote.getVoice());
-    }
 
-    @Override
-    public void insert(final ThreadVote vote) {
-        final String SQL = "UPDATE votes SET voice=? WHERE id=?;";
-        template.update(SQL, vote.getVoice(), vote.getId());
-    }
 
-    @Override
-    public void count(final Thread thread) {
-        final String SQL = "SELECT sum(voice) FROM votes WHERE thread_id=?;";
-        int votes = template.queryForObject(SQL, Integer.class, thread.getId());
+        final String SQL_UP_THREAD = "UPDATE threads SET __votes = (SELECT SUM(voice) FROM votes " +
+                "WHERE (thread_id) = ?) WHERE id = ? RETURNING __votes";
+        int votes =  template.queryForObject(SQL_UP_THREAD, Integer.class, thread.getId(), thread.getId());
         thread.setVotes(votes);
     }
 
+    @Override
+    public void insert(final Thread thread, final ThreadVote vote) {
+        final String SQL = "UPDATE votes SET voice=? WHERE id=?;";
+        template.update(SQL, vote.getVoice(), vote.getId());
+
+
+        final String SQL_UP_THREAD = "UPDATE threads SET __votes = (SELECT SUM(voice) FROM votes " +
+                "WHERE (thread_id) = ?) WHERE id = ? RETURNING __votes";
+        int votes =  template.queryForObject(SQL_UP_THREAD, Integer.class, thread.getId(), thread.getId());
+        thread.setVotes(votes);
+    }
 
     private static final class ThreadVoteMapper implements RowMapper<ThreadVote> {
         public ThreadVote mapRow(ResultSet rs, int rowNum) throws SQLException {

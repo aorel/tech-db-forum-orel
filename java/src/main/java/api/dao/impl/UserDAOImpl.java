@@ -1,6 +1,7 @@
 package api.dao.impl;
 
 import api.dao.UserDAO;
+import api.models.Forum;
 import api.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -26,25 +27,25 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public void create(User user) {
+    public void create(final User user) {
         final String SQL = "INSERT INTO users (nickname, fullname, email, about) VALUES(?, ?, ?, ?)";
         template.update(SQL, user.getNickname(), user.getFullname(), user.getEmail(), user.getAbout());
     }
 
     @Override
-    public List<User> getDuplicates(User user) {
+    public List<User> getDuplicates(final User user) {
         final String SQL = "SELECT * FROM users WHERE LOWER(nickname) = LOWER(?) OR LOWER(email) = LOWER(?)";
         return template.query(SQL, USER_MAPPER, user.getNickname(), user.getEmail());
     }
 
     @Override
-    public User getProfile(String nickname) {
+    public User getProfile(final String nickname) {
         final String SQL = "SELECT * FROM users WHERE LOWER(nickname) = LOWER(?)";
         return template.queryForObject(SQL, USER_MAPPER, nickname);
     }
 
     @Override
-    public void setProfile(User user) {
+    public void setProfile(final User user) {
         final StringBuilder sql = new StringBuilder("UPDATE users SET");
         final List<Object> args = new ArrayList<>();
 
@@ -74,19 +75,24 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public List<User> getForumUsers(String slug, Integer limit, String since, Boolean desc) {
-        final StringBuilder SQL = new StringBuilder("SELECT DISTINCT u.id, nickname, fullname, email, about FROM users u " +
-                "LEFT JOIN threads t ON (u.id = t.user_id) " +
-                "LEFT JOIN posts p ON (u.id = p.user_id) " +
-                "JOIN forums f ON (LOWER(f.slug)=LOWER(?) AND (f.id = t.forum_id OR f.id = p.forum_id)) ");
+    public List<User> getForumUsers(final Forum forum, final Integer limit, final String since, final Boolean desc) {
+        final String SQL_BEGIN = "SELECT u.id, nickname, fullname, email, about " +
+                "FROM users u " +
+                "WHERE u.id IN (" +
+                "SELECT user_id " +
+                "FROM forum_users " +
+                "WHERE forum_id = ?" +
+                ") ";
+        final StringBuilder SQL = new StringBuilder(SQL_BEGIN);
+
         final List<Object> args = new ArrayList<>();
-        args.add(slug);
+        args.add(forum.getId());
 
         if (since != null) {
             if (desc != null && desc) {
-                SQL.append("WHERE LOWER(nickname) < LOWER(?) ");
+                SQL.append("AND LOWER(nickname) < LOWER(?) ");
             } else {
-                SQL.append("WHERE LOWER(nickname) > LOWER(?) ");
+                SQL.append("AND LOWER(nickname) > LOWER(?) ");
             }
             args.add(since);
         }

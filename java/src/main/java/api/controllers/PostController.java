@@ -49,6 +49,8 @@ public class PostController {
     @GetMapping(path = "/{id}/details")
     public ResponseEntity getIdDetails(@PathVariable(name = "id") Integer id,
                                        @RequestParam(name = "related", required = false) List<String> related) {
+        System.out.println("( get) post/{id}/details: " + id);
+
         Post post = getPostDetails(id);
         if (post == null) {
             return ResponseEntity.notFound().build();
@@ -69,8 +71,6 @@ public class PostController {
                         break;
                     case "forum":
                         Forum forum = forumDAO.getBySlug(post.getForum());
-                        forumDAO.getCountPosts(forum);
-                        forumDAO.getCountThreads(forum);
 
                         postDetails.setForum(forum);
                         break;
@@ -87,6 +87,8 @@ public class PostController {
     @PostMapping(path = "/{id}/details")
     public ResponseEntity setIdDetails(@PathVariable(name = "id") int id,
                                        @RequestBody PostUpdate postUpdate) {
+        System.out.println("(post) post/{id}/details: " + id);
+
         Post post = getPostDetails(id);
         if (post == null) {
             return ResponseEntity.notFound().build();
