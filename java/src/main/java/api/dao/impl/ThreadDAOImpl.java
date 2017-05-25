@@ -22,14 +22,15 @@ import java.util.TimeZone;
 @Repository
 @Transactional
 public class ThreadDAOImpl implements ThreadDAO {
-    private static final String SQL_JOIN_FORUM_BEGIN = "SELECT threads.id AS t_id, forums.id AS f_id, forums.slug AS f_slug " +
-            "FROM threads " +
-            "JOIN forums ON forums.id=threads.forum_id ";
+    private static final String SQL_JOIN_FORUM_BEGIN = "SELECT t.id AS t_id, f.id AS f_id, f.slug AS f_slug " +
+            "FROM threads t " +
+            "JOIN forums f ON f.id=t.forum_id ";
 
-    private static final String SQL_JOIN_ALL_BEGIN = "SELECT threads.id AS t_id, threads.title AS t_title, nickname, threads.message AS msg, " +
-            "threads.slug AS t_slug, forums.slug AS f_slug, created, __votes FROM threads " +
-            "JOIN forums ON forums.id=threads.forum_id " +
-            "JOIN users ON users.id=threads.user_id ";
+    private static final String SQL_JOIN_ALL_BEGIN = "SELECT t.id AS t_id, t.title AS t_title, nickname, t.message AS msg, " +
+            "t.slug AS t_slug, f.slug AS f_slug, created, __votes " +
+            "FROM threads t " +
+            "JOIN forums f ON f.id=t.forum_id " +
+            "JOIN users u ON u.id=t.user_id ";
 
     private static final ThreadForumMapper THREAD_FORUM_MAPPER = new ThreadForumMapper();
     private static final ThreadForumUserMapper THREAD_FORUM_USER_MAPPER = new ThreadForumUserMapper();
@@ -49,7 +50,7 @@ public class ThreadDAOImpl implements ThreadDAO {
             SQL = "INSERT INTO threads (title, user_id, forum_id, message, slug) VALUES (?, ?, ?, ?, ?) RETURNING id;";
             object = new Object[]{thread.getTitle(), thread.getUserId(), thread.getForumId(), thread.getMessage(), thread.getSlug()};
         } else {
-            Timestamp timestamp = Settings.timestampFromString(thread.getCreated());
+            Timestamp timestamp = Settings.timestampFromStringZone(thread.getCreated());
 
             SQL = "INSERT INTO threads (title, user_id, forum_id, message, slug, created) VALUES (?, ?, ?, ?, ?, ?) RETURNING id;";
             object = new Object[]{thread.getTitle(), thread.getUserId(), thread.getForumId(), thread.getMessage(), thread.getSlug(), timestamp};
@@ -63,28 +64,28 @@ public class ThreadDAOImpl implements ThreadDAO {
     @Override
     public Thread getByIdJoinForum(final Integer id) {
         final String SQL = SQL_JOIN_FORUM_BEGIN +
-                "WHERE threads.id=?;";
+                "WHERE t.id=?;";
         return template.queryForObject(SQL, THREAD_FORUM_MAPPER, id);
     }
 
     @Override
     public Thread getByIdJoinAll(final Integer id) {
         final String SQL = SQL_JOIN_ALL_BEGIN +
-                "WHERE threads.id=?;";
+                "WHERE t.id=?;";
         return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, id);
     }
 
     @Override
     public Thread getBySlugJoinForum(final String slug) {
         final String SQL = SQL_JOIN_FORUM_BEGIN +
-                "WHERE LOWER(threads.slug) = LOWER(?);";
+                "WHERE LOWER(t.slug) = LOWER(?);";
         return template.queryForObject(SQL, THREAD_FORUM_MAPPER, slug);
     }
 
     @Override
     public Thread getBySlugJoinAll(final String slug) {
         final String SQL = SQL_JOIN_ALL_BEGIN +
-                "WHERE LOWER(threads.slug) = LOWER(?);";
+                "WHERE LOWER(t.slug) = LOWER(?);";
         return template.queryForObject(SQL, THREAD_FORUM_USER_MAPPER, slug);
     }
 
@@ -105,25 +106,25 @@ public class ThreadDAOImpl implements ThreadDAO {
 
 
         if (since != null) {
-            sql.append(" AND created ");
+            sql.append("AND created ");
 
             if (desc != null && desc) {
-                sql.append("<= ?");
+                sql.append("<= ? ");
             } else {
-                sql.append(">= ?");
+                sql.append(">= ? ");
             }
 
             Timestamp timestamp = Settings.timestampFromStringZone(since);
             args.add(timestamp);
         }
 
-        sql.append(" ORDER BY created ");
+        sql.append("ORDER BY created ");
 
         if (desc != null && desc) {
-            sql.append(" DESC ");
+            sql.append("DESC ");
         }
 
-        sql.append(" LIMIT ?;");
+        sql.append("LIMIT ?;");
         args.add(limit);
 
 

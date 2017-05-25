@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,17 +15,11 @@ public class Settings {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static Timestamp timestampNow() {
-//        LocalDateTime now = LocalDateTime.now();
-//        Timestamp timestamp1 = Timestamp.valueOf(LocalDateTime.parse(now.toString(), DateTimeFormatter.ISO_DATE_TIME));
         return new Timestamp(System.currentTimeMillis());
     }
 
-    public static Timestamp timestampFromString(String time) {
-        return Timestamp.valueOf(LocalDateTime.parse(time, DateTimeFormatter.ISO_DATE_TIME));
-    }
-
     public static Timestamp timestampFromStringZone(String time) {
-        return new Timestamp(ZonedDateTime.parse(time).toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli());
+        return new Timestamp(ZonedDateTime.parse(ZonedDateTime.parse(time).format(DateTimeFormatter.ISO_INSTANT)).toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli());
     }
 
     public static void printObject(Object o) {

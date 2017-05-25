@@ -49,14 +49,12 @@ public class PostController {
     @GetMapping(path = "/{id}/details")
     public ResponseEntity getIdDetails(@PathVariable(name = "id") Integer id,
                                        @RequestParam(name = "related", required = false) List<String> related) {
-        System.out.println("( get) post/{id}/details: " + id);
-
-        Post post = getPostDetails(id);
+        final Post post = getPostDetails(id);
         if (post == null) {
             return ResponseEntity.notFound().build();
         }
 
-        PostDetails postDetails = new PostDetails();
+        final PostDetails postDetails = new PostDetails();
         postDetails.setPost(post);
 
         if (related != null) {
@@ -81,15 +79,16 @@ public class PostController {
             }
         }
 
+//        System.out.println("( get) post/" + id + "/details");
         return ResponseEntity.ok(postDetails);
     }
 
     @PostMapping(path = "/{id}/details")
     public ResponseEntity setIdDetails(@PathVariable(name = "id") int id,
                                        @RequestBody PostUpdate postUpdate) {
-        System.out.println("(post) post/{id}/details: " + id);
+        System.out.println("(post) post/" + id + "/details");
 
-        Post post = getPostDetails(id);
+        final Post post = getPostDetails(id);
         if (post == null) {
             return ResponseEntity.notFound().build();
         }

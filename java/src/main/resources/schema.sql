@@ -1,5 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS CITEXT;
 
+-- SET SYNCHRONOUS_COMMIT = 'off';
+
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL NOT NULL PRIMARY KEY,
   nickname CITEXT NOT NULL UNIQUE,
@@ -35,6 +37,9 @@ CREATE TABLE IF NOT EXISTS threads (
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
   FOREIGN KEY (forum_id) REFERENCES forums (id) ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS idx_threads_user_id ON threads (user_id);
+CREATE INDEX IF NOT EXISTS idx_threads_forum_id ON threads (forum_id);
+CREATE INDEX IF NOT EXISTS idx_threads_slug ON threads (LOWER(slug));
 
 
 CREATE TABLE IF NOT EXISTS votes (
@@ -58,7 +63,7 @@ CREATE TABLE IF NOT EXISTS posts (
   is_edited BOOLEAN DEFAULT FALSE,
   message CITEXT NOT NULL,
   created TIMESTAMP DEFAULT NOW(),
-  path INT ARRAY,
+  __path INT ARRAY,
 
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
   FOREIGN KEY (forum_id) REFERENCES forums (id) ON DELETE CASCADE,
@@ -67,9 +72,14 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts (user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_forum_id ON posts (forum_id);
 CREATE INDEX IF NOT EXISTS idx_posts_thread_id ON posts (thread_id);
-CREATE INDEX IF NOT EXISTS idx_posts_i_pi_ti ON posts(id, parent_id, thread_id); -- getParents
+CREATE INDEX IF NOT EXISTS idx_posts_created ON posts (created);
+CREATE INDEX IF NOT EXISTS idx_posts_path1 ON posts ((__path[1]));
+CREATE INDEX IF NOT EXISTS idx_posts_parents ON posts(id, parent_id, thread_id);
+CREATE INDEX IF NOT EXISTS idx_posts_getbyid ON posts (id, user_id, forum_id);
+
 
 -- ============================================================================
+
 
 CREATE TABLE IF NOT EXISTS forum_users (
   user_id INT REFERENCES users(id) NOT NULL,

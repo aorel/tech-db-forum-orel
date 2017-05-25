@@ -99,10 +99,10 @@ public class UserDAOImpl implements UserDAO {
 
         sql.append("ORDER BY nickname ");
         if (desc != null) {
-            sql.append((desc ? "DESC" : "ASC"));
+            sql.append((desc ? "DESC " : "ASC "));
         }
         if (limit != null) {
-            sql.append(" LIMIT ? ");
+            sql.append("LIMIT ? ");
             args.add(limit);
         }
 

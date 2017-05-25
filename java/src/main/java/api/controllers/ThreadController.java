@@ -35,10 +35,10 @@ public class ThreadController {
 
     @Nullable
     private Thread getBySlugOrIdJoinAll(final String slugOrId) {
-        Thread thread;
+        final Thread thread;
         try {
             if (slugOrId.matches("\\d+")) {
-                Integer id = Integer.parseInt(slugOrId);
+                final Integer id = Integer.parseInt(slugOrId);
                 thread = threadDAO.getByIdJoinAll(id);
             } else {
                 thread = threadDAO.getBySlugJoinAll(slugOrId);
@@ -60,10 +60,10 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
-        Thread thread;
+        final Thread thread;
         try {
             if (slugOrId.matches("\\d+")) {
-                Integer id = Integer.parseInt(slugOrId);
+                final Integer id = Integer.parseInt(slugOrId);
                 thread = threadDAO.getByIdJoinForum(id);
             } else {
                 thread = threadDAO.getBySlugJoinForum(slugOrId);
@@ -75,7 +75,7 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
-        List<Integer> children = postDAO.getChildren(thread.getId());
+        final List<Integer> children = postDAO.getChildren(thread.getId());
         for (Post post : posts) {
             if (post.getParent() != null &&
                     post.getParent() != 0 &&
@@ -102,12 +102,12 @@ public class ThreadController {
     @GetMapping(path = "/{slugOrId}/details")
     public ResponseEntity getSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId) {
 
-        Thread thread = getBySlugOrIdJoinAll(slugOrId);
+        final Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
 
-        System.out.println("( get) thread/" + slugOrId + "/details");
+//        System.out.println("( get) thread/" + slugOrId + "/details");
 //        Settings.printObject(thread);
         return ResponseEntity.ok(thread);
 
@@ -116,9 +116,9 @@ public class ThreadController {
     @PostMapping(path = "/{slugOrId}/details")
     public ResponseEntity setSlugDetails(@PathVariable(name = "slugOrId") final String slugOrId,
                                          @RequestBody ThreadUpdate threadUpdate) {
-        System.out.println("(post) thread/{slugOrId}/details: " + slugOrId);
+//        System.out.println("(post) thread/{slugOrId}/details: " + slugOrId);
 
-        Thread thread = getBySlugOrIdJoinAll(slugOrId);
+        final Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
@@ -134,7 +134,7 @@ public class ThreadController {
                                     @RequestParam(name = "marker", required = false, defaultValue = "0") final String marker,
                                     @RequestParam(name = "sort", required = false, defaultValue = "flat") final String sort,
                                     @RequestParam(name = "desc", required = false, defaultValue = "false") final Boolean desc) {
-        Thread thread = getBySlugOrIdJoinAll(slugOrId);
+        final Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }
@@ -147,7 +147,7 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
 
-        Posts posts = new Posts();
+        final Posts posts = new Posts();
         Integer size;
         try {
             switch (sort) {
@@ -160,7 +160,7 @@ public class ThreadController {
                     size = posts.getPosts().size();
                     break;
                 case "parent_tree":
-                    List<Integer> parents = postDAO.getParents(thread, limit, offset, desc);
+                    final List<Integer> parents = postDAO.getParents(thread, limit, offset, desc);
                     size = parents.size();
                     posts.setPosts(postDAO.getPostsParentTree(thread, desc, parents));
                     break;
@@ -176,18 +176,18 @@ public class ThreadController {
         offset += size;
         posts.setMarker(offset.toString());
 
-        System.out.println("( get) thread/" + slugOrId +
-                "/posts?limit=" + limit + "&marker=" + marker + "&sort=" + sort + "&desc=" + desc +
-                " [id=" + thread.getId() + "]");
+//        System.out.println("( get) thread/" + slugOrId +
+//                "/posts?limit=" + limit + "&marker=" + marker + "&sort=" + sort + "&desc=" + desc +
+//                " [id=" + thread.getId() + "]");
         return ResponseEntity.ok(posts);
     }
 
     @PostMapping(path = "/{slugOrId}/vote")
     public ResponseEntity slugVote(@PathVariable(name = "slugOrId") final String slugOrId,
                                    @RequestBody ThreadVote vote) {
-        System.out.println("(post) thread/" + slugOrId + "/vote");
+//        System.out.println("(post) thread/" + slugOrId + "/vote");
 
-        Thread thread = getBySlugOrIdJoinAll(slugOrId);
+        final Thread thread = getBySlugOrIdJoinAll(slugOrId);
         if (thread == null) {
             return ResponseEntity.notFound().build();
         }

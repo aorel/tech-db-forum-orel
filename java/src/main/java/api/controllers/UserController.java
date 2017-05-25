@@ -54,7 +54,7 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
 
-        System.out.println("( get) user/" + nickname + "/profile");
+//        System.out.println("( get) user/" + nickname + "/profile");
         return ResponseEntity.ok(user);
     }
 

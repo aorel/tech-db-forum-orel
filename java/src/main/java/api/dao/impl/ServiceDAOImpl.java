@@ -18,7 +18,7 @@ public class ServiceDAOImpl implements ServiceDAO {
 
     @Override
     public void clear() {
-        final String DEL_ = "TRUNCATE TABLE users, forums, threads, votes, posts CASCADE;";
+        final String DEL_ = "TRUNCATE TABLE users, forums, threads, votes, posts, forum_users CASCADE;";
         template.execute(DEL_);
     }
 
