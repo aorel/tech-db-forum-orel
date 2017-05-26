@@ -86,7 +86,7 @@ public class PostController {
     @PostMapping(path = "/{id}/details")
     public ResponseEntity setIdDetails(@PathVariable(name = "id") int id,
                                        @RequestBody PostUpdate postUpdate) {
-        System.out.println("(post) post/" + id + "/details");
+//        System.out.println("(post) post/" + id + "/details");
 
         final Post post = getPostDetails(id);
         if (post == null) {

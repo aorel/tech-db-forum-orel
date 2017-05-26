@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS posts (
   is_edited BOOLEAN DEFAULT FALSE,
   message CITEXT NOT NULL,
   created TIMESTAMP DEFAULT NOW(),
+
+  __nickname CITEXT NOT NULL,
   __path INT ARRAY,
 
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
@@ -73,9 +75,9 @@ CREATE INDEX IF NOT EXISTS idx_posts_thread_id ON posts (thread_id);
 CREATE INDEX IF NOT EXISTS idx_posts_created ON posts (created);
 CREATE INDEX IF NOT EXISTS idx_posts_path1 ON posts ((__path[1]));
 CREATE INDEX IF NOT EXISTS idx_posts_parents ON posts(id, parent_id, thread_id);
-CREATE INDEX IF NOT EXISTS idx_posts_getbyid ON posts (id, user_id, forum_id);
-
-
+CREATE INDEX IF NOT EXISTS idx_posts_getbyid ON posts (id, forum_id);
+CREATE INDEX IF NOT EXISTS idx_posts_flat ON posts (thread_id, created, id);
+CREATE INDEX IF NOT EXISTS idx_posts_tree ON posts (thread_id, __path);
 -- ============================================================================
 
 

@@ -8,6 +8,7 @@ import api.models.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,12 +33,14 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public void create(final Thread thread, final List<Post> posts) throws SQLException {
-        final String NEW_SQL = "INSERT INTO posts (id, parent_id, user_id, forum_id, thread_id, is_edited, message, created, __path) " +
-                "VALUES (?, ?, (SELECT id FROM users WHERE LOWER(nickname) = LOWER(?)), ?, ?, ?, ?, ?, " +
-                "array_append((SELECT __path FROM posts WHERE id = ?), ?));";
+        final String NEW_SQL = "INSERT INTO posts (parent_id, user_id, forum_id, thread_id, is_edited, message, created, __nickname, __path) " +
+                "VALUES (?, (SELECT id FROM users WHERE LOWER(nickname) = LOWER(?)), ?, ?, ?, ?, ?, ?, " +
+                "array_append((SELECT __path FROM posts WHERE id = ?), currval('posts_id_seq')::INT));";
 
-        try (Connection connection = template.getDataSource().getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement(NEW_SQL, Statement.NO_GENERATED_KEYS);
+        try {
+            Connection connection = DataSourceUtils.getConnection(template.getDataSource());
+
+            PreparedStatement preparedStatement = connection.prepareStatement(NEW_SQL, Statement.RETURN_GENERATED_KEYS);
 
             Timestamp timestamp = Settings.timestampNow();
             SimpleDateFormat dateFormat = new SimpleDateFormat(Settings.DATE_FORMAT_PATTERN_ZULU);
@@ -45,23 +48,21 @@ public class PostDAOImpl implements PostDAO {
 
 //            System.out.println("thread posts: size=" + posts.size() + ", date=" + timestamp);
             for (Post post : posts) {
-                // TODO generate next post.size() id!!!
-                post.setId(template.queryForObject("SELECT nextval('posts_id_seq')", Integer.class));
-
                 if (post.getCreated() != null) {
                     timestamp = Settings.timestampFromStringZone(post.getCreated());
                 }
 
-                preparedStatement.setInt(1, post.getId());
-                preparedStatement.setInt(2, post.getParent());
-                preparedStatement.setString(3, post.getAuthor());
-                preparedStatement.setInt(4, thread.getForumId());
-                preparedStatement.setInt(5, thread.getId());
-                preparedStatement.setBoolean(6, post.getIsEdited());
-                preparedStatement.setString(7, post.getMessage());
-                preparedStatement.setTimestamp(8, timestamp);
+                preparedStatement.setInt(1, post.getParent());
+                preparedStatement.setString(2, post.getAuthor());
+                preparedStatement.setInt(3, thread.getForumId());
+                preparedStatement.setInt(4, thread.getId());
+                preparedStatement.setBoolean(5, post.getIsEdited());
+                preparedStatement.setString(6, post.getMessage());
+                preparedStatement.setTimestamp(7, timestamp);
+
+                preparedStatement.setString(8, post.getAuthor());
+
                 preparedStatement.setInt(9, post.getParent());
-                preparedStatement.setInt(10, post.getId());
 
                 preparedStatement.addBatch();
 
@@ -71,10 +72,20 @@ public class PostDAOImpl implements PostDAO {
             }
 
             preparedStatement.executeBatch();
+
+            ResultSet rs = preparedStatement.getGeneratedKeys();
+            int i = 0;
+            while (rs.next()) {
+                int id = rs.getInt(1);
+                posts.get(i).setId(id);
+                i++;
+            }
+
             preparedStatement.close();
+        } catch (BatchUpdateException e) {
+            System.out.println("PreparedStatement BatchUpdateException");
+            throw e;
         } catch (SQLException e) {
-            // TODO try with res
-            System.out.println("preparedStatement error");
 //            e.printStackTrace();
             throw e;
         }
@@ -85,10 +96,9 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public List<Post> getPostsFlat(final Thread thread, final Integer limit, final Integer offset, final Boolean desc) {
-        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
+        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, __nickname, is_edited, p.message, p.created " +
                 "FROM posts p " +
                 "JOIN forums f ON (f.id = p.forum_id) " +
-                "JOIN users u ON (u.id = p.user_id) " +
                 "WHERE p.thread_id = ? " +
                 "ORDER BY created " + (desc ? "DESC" : "ASC") + ", id " + (desc ? "DESC" : "ASC") + " " +
                 "LIMIT ? OFFSET ?;";
@@ -99,10 +109,9 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public List<Post> getPostsTree(final Thread thread, final Integer limit, final Integer offset, final Boolean desc) {
-        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
+        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, __nickname, is_edited, p.message, p.created " +
                 "FROM posts p " +
                 "JOIN forums f ON (f.id = p.forum_id) " +
-                "JOIN users u ON (u.id = p.user_id) " +
                 "WHERE p.thread_id = ? " +
                 "ORDER BY p.__path " + (desc ? "DESC" : "ASC") + " LIMIT ? OFFSET ?;";
 
@@ -122,10 +131,9 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public List<Post> getPostsParentTree(final Thread thread, final Boolean desc, final List<Integer> parents) {
-        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
+        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, __nickname, is_edited, p.message, p.created " +
                 "FROM posts p " +
                 "JOIN forums f ON (f.id = p.forum_id) " +
-                "JOIN users u ON (u.id = p.user_id) " +
                 "WHERE p.__path[1] = ? AND p.thread_id = ? " +
                 "ORDER BY __path " + (desc ? "DESC" : "ASC") + ", p.id " + (desc ? "DESC" : "ASC") + ";";
 
@@ -138,10 +146,9 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public Post getById(final Integer id) {
-        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, nickname, is_edited, p.message, p.created " +
+        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, __nickname, is_edited, p.message, p.created " +
                 "FROM posts p " +
                 "JOIN forums f ON (f.id = p.forum_id) " +
-                "JOIN users u ON (u.id = p.user_id) " +
                 "WHERE p.id = ?;";
         return template.queryForObject(SQL, POST_MAPPER, id);
     }
@@ -172,7 +179,7 @@ public class PostDAOImpl implements PostDAO {
             post.setParent(rs.getInt("parent_id"));
             post.setForum(rs.getString("slug"));
             post.setThread(rs.getInt("thread_id"));
-            post.setAuthor(rs.getString("nickname"));
+            post.setAuthor(rs.getString("__nickname"));
             post.setIsEdited(rs.getBoolean("is_edited"));
             post.setMessage(rs.getString("message"));
 
